@@ -172,13 +172,28 @@ st.markdown("""
         background-color: #1565c0 !important;
     }
     
-    /* Botões de download também */
+    /* Botões de download */
     .stDownloadButton > button {
         color: white !important;
     }
     
     /* Botão primário específico */
     button[kind="primary"] {
+        color: white !important;
+    }
+
+     /* Botão de download (backup JSON) */
+    div[data-testid="stDownloadButton"] > button {
+        background-color: #1f77b4;   /* azul institucional */
+        color: white !important;
+        border-radius: 6px;
+        padding: 0.5em 1em;
+        border: none;
+        font-weight: 600;
+    }
+
+    div[data-testid="stDownloadButton"] > button:hover {
+        background-color: #155a8a;
         color: white !important;
     }
     
@@ -1366,6 +1381,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
