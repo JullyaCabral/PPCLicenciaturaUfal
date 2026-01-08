@@ -141,95 +141,144 @@ def exportar_xlsx(componentes: list, caminho_arquivo: str, abas: list[str] | Non
     return caminho_arquivo
 
 
+def _ordenar_semestre_valor(semestre) -> tuple:
+    if isinstance(semestre, (int, float)):
+        return (0, int(semestre))
+    if isinstance(semestre, str):
+        sem_strip = semestre.strip()
+        if sem_strip.isdigit():
+            return (0, int(sem_strip))
+        return (1, sem_strip.lower())
+    return (1, "")
+
+
+def _formatar_rotulo_periodo(semestre) -> str:
+    if isinstance(semestre, (int, float)):
+        return f"{int(semestre)}º Período"
+    if isinstance(semestre, str) and semestre.strip():
+        return semestre.strip()
+    return "Sem período"
+
+
+def _obter_observacao_nucleo(componente: dict) -> str:
+    nucleo = componente.get("nucleo")
+    if nucleo == "I":
+        temas = componente.get("temas_nucleo_i") or []
+        if temas:
+            codigos = []
+            for tema in temas:
+                if isinstance(tema, str) and ")" in tema:
+                    codigos.append(tema.split(")")[0].strip().upper())
+                elif isinstance(tema, str) and tema:
+                    codigos.append(tema.strip())
+            if codigos:
+                prefixo = "Temas" if len(codigos) > 1 else "Tema"
+                return f"{prefixo}: {', '.join(codigos)}"
+    return ""
+
+
 def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
     """
     Gera a matriz curricular principal organizada por período/semestre.
-    Inclui componentes, linha TOTAL por período e prepara rodapé.
-    
-    Args:
-        componentes: Lista de dicionários com os componentes
-    
-    Returns:
-        DataFrame com matriz por período (colunas: Nome, CH Semanal, CH Teórica, CH Prática, CH Extensão, CH Total)
+    Inclui linha de cabeçalho por período e linha TOTAL por período.
     """
-    # Ordenar componentes por semestre
-    componentes_ordenados = sorted(componentes, key=lambda x: (x.get("semestre", 0), x.get("nome", "")))
+    colunas = [
+        "Semestre",
+        "Nome",
+        "Tipo",
+        "CH Semanal",
+        "CH Teórica",
+        "CH Prática",
+        "CH Extensão",
+        "CH Total",
+        "Núcleo",
+        "Observação Núcleo"
+    ]
     
-    dados_matriz = []
+    if not componentes:
+        return pd.DataFrame(columns=colunas)
     
-    # Agrupar por semestre
-    semestre_atual = None
+    componentes_ordenados = sorted(
+        componentes,
+        key=lambda x: (
+            _ordenar_semestre_valor(x.get("semestre")),
+            (x.get("nome") or "").lower()
+        )
+    )
+    
+    grupos: dict = {}
+    ordem_grupos: list = []
     for comp in componentes_ordenados:
-        semestre = comp.get("semestre", 0)
-        
-        # Se mudou de semestre, adicionar linha TOTAL do semestre anterior
-        if semestre_atual is not None and semestre != semestre_atual:
-            # Calcular totais do semestre anterior
-            comps_sem_anterior = [c for c in componentes_ordenados if c.get("semestre") == semestre_atual]
-            ch_total_sem = sum(c.get("ch_total", 0) for c in comps_sem_anterior)
-            ch_teorica_sem = sum(c.get("ch_teorica", 0) for c in comps_sem_anterior)
-            ch_pratica_sem = sum(c.get("ch_pratica", 0) for c in comps_sem_anterior)
-            ch_extensao_sem = sum(c.get("ch_extensao", 0) for c in comps_sem_anterior)
-            
-            # Adicionar linha TOTAL
-            dados_matriz.append({
-                "Semestre": f"{semestre_atual}",
-                "Nome": "TOTAL DO PERÍODO",
-                "Tipo": "",
-                "CH Semanal": "",
-                "CH Teórica": ch_teorica_sem,
-                "CH Prática": ch_pratica_sem,
-                "CH Extensão": ch_extensao_sem,
-                "CH Total": ch_total_sem,
-                "Núcleo": ""
-            })
-        
-        # Adicionar componente
-        aulas_semanais_val = comp.get("aulas_semanais", "")
-        if aulas_semanais_val == "" or aulas_semanais_val is None:
-            aulas_semanais_display = ""
+        semestre_val = comp.get("semestre")
+        if isinstance(semestre_val, (int, float)) and semestre_val > 0:
+            chave = int(semestre_val)
+        elif isinstance(semestre_val, str) and semestre_val.strip().isdigit():
+            chave = int(semestre_val.strip())
         else:
-            try:
-                aulas_semanais_display = int(aulas_semanais_val) if isinstance(aulas_semanais_val, (int, float)) else ""
-            except:
-                aulas_semanais_display = ""
+            chave = "Sem período"
         
+        if chave not in grupos:
+            grupos[chave] = []
+            ordem_grupos.append(chave)
+        grupos[chave].append(comp)
+    
+    dados_matriz: list[dict] = []
+    
+    for chave in ordem_grupos:
+        componentes_semestre = grupos[chave]
+        rotulo_periodo = _formatar_rotulo_periodo(chave)
         dados_matriz.append({
-            "Semestre": f"{semestre}",
-            "Nome": comp.get("nome", ""),
-            "Tipo": comp.get("tipo", ""),
-            "CH Semanal": aulas_semanais_display,
-            "CH Teórica": comp.get("ch_teorica", 0),
-            "CH Prática": comp.get("ch_pratica", 0),
-            "CH Extensão": comp.get("ch_extensao", 0),
-            "CH Total": comp.get("ch_total", 0),
-            "Núcleo": comp.get("nucleo", "")
+            "Semestre": rotulo_periodo,
+            "Nome": "",
+            "Tipo": "",
+            "CH Semanal": None,
+            "CH Teórica": None,
+            "CH Prática": None,
+            "CH Extensão": None,
+            "CH Total": None,
+            "Núcleo": "",
+            "Observação Núcleo": ""
         })
         
-        semestre_atual = semestre
-    
-    # Adicionar linha TOTAL do último semestre
-    if semestre_atual is not None:
-        comps_sem = [c for c in componentes_ordenados if c.get("semestre") == semestre_atual]
-        if comps_sem:
-            ch_total_sem = sum(c.get("ch_total", 0) for c in comps_sem)
-            ch_teorica_sem = sum(c.get("ch_teorica", 0) for c in comps_sem)
-            ch_pratica_sem = sum(c.get("ch_pratica", 0) for c in comps_sem)
-            ch_extensao_sem = sum(c.get("ch_extensao", 0) for c in comps_sem)
+        for comp in componentes_semestre:
+            aulas_semanais_val = comp.get("aulas_semanais")
+            if isinstance(aulas_semanais_val, (int, float)):
+                aulas_semanais_display = int(aulas_semanais_val)
+            else:
+                aulas_semanais_display = None
             
             dados_matriz.append({
-                "Semestre": f"{semestre_atual}",
-                "Nome": "TOTAL DO PERÍODO",
-                "Tipo": "",
-                "CH Semanal": "",
-                "CH Teórica": ch_teorica_sem,
-                "CH Prática": ch_pratica_sem,
-                "CH Extensão": ch_extensao_sem,
-                "CH Total": ch_total_sem,
-                "Núcleo": ""
+                "Semestre": comp.get("semestre", ""),
+                "Nome": comp.get("nome", ""),
+                "Tipo": comp.get("tipo", ""),
+                "CH Semanal": aulas_semanais_display,
+                "CH Teórica": comp.get("ch_teorica", 0),
+                "CH Prática": comp.get("ch_pratica", 0),
+                "CH Extensão": comp.get("ch_extensao", 0),
+                "CH Total": comp.get("ch_total", 0),
+                "Núcleo": comp.get("nucleo", ""),
+                "Observação Núcleo": _obter_observacao_nucleo(comp)
             })
+        
+        ch_total_sem = sum(c.get("ch_total", 0) for c in componentes_semestre)
+        ch_teorica_sem = sum(c.get("ch_teorica", 0) for c in componentes_semestre)
+        ch_pratica_sem = sum(c.get("ch_pratica", 0) for c in componentes_semestre)
+        ch_extensao_sem = sum(c.get("ch_extensao", 0) for c in componentes_semestre)
+        
+        dados_matriz.append({
+            "Semestre": chave if isinstance(chave, int) else str(chave),
+            "Nome": "TOTAL DO PERÍODO",
+            "Tipo": "",
+            "CH Semanal": None,
+            "CH Teórica": ch_teorica_sem,
+            "CH Prática": ch_pratica_sem,
+            "CH Extensão": ch_extensao_sem,
+            "CH Total": ch_total_sem,
+            "Núcleo": "",
+            "Observação Núcleo": ""
+        })
     
-    return pd.DataFrame(dados_matriz)
+    return pd.DataFrame(dados_matriz, columns=colunas)
 
 
 def gerar_resumo_por_semestre_nucleo(componentes: list) -> pd.DataFrame:
@@ -304,7 +353,7 @@ def _agrupar_componentes_por_semestre(componentes: list) -> list[dict]:
         grupos.setdefault(chave, []).append(comp)
     
     resultado = []
-    for chave in sorted(grupos, key=lambda c: (9999 if isinstance(c, str) else c, c)):
+    for chave in sorted(grupos, key=_ordenar_semestre_valor):
         componentes_semestre = sorted(grupos[chave], key=lambda x: (x.get("nome") or "").lower())
         ch_total = sum(c.get("ch_total", 0) for c in componentes_semestre)
         ch_teorica = sum(c.get("ch_teorica", 0) for c in componentes_semestre)
@@ -425,10 +474,17 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
         for bloco in _agrupar_componentes_por_semestre(componentes):
             story.append(Paragraph(f"Período {bloco['rotulo']}", subheading_style))
             dados_tabela = [
-                ["", Paragraph("Nome do Componente", table_header_style), Paragraph("Tipo", table_header_style),
-                 Paragraph("CH Semanal", table_header_style), Paragraph("CH Teórica", table_header_style),
-                 Paragraph("CH Prática", table_header_style), Paragraph("CH Extensão", table_header_style),
-                 Paragraph("CH Total", table_header_style)]
+                [
+                    "",
+                    Paragraph("Nome do Componente", table_header_style),
+                    Paragraph("Tipo", table_header_style),
+                    Paragraph("CH Semanal", table_header_style),
+                    Paragraph("CH Teórica", table_header_style),
+                    Paragraph("CH Prática", table_header_style),
+                    Paragraph("CH Extensão", table_header_style),
+                    Paragraph("CH Total", table_header_style),
+                    Paragraph("Observação Núcleo", table_header_style)
+                ]
             ]
             
             for comp in bloco["componentes"]:
@@ -440,7 +496,8 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
                     _formatar_carga_horaria(comp.get("ch_teorica")),
                     _formatar_carga_horaria(comp.get("ch_pratica")),
                     _formatar_carga_horaria(comp.get("ch_extensao")),
-                    _formatar_carga_horaria(comp.get("ch_total"))
+                    _formatar_carga_horaria(comp.get("ch_total")),
+                    Paragraph(_obter_observacao_nucleo(comp), table_text_style)
                 ])
             
             totais = bloco["totais"]
@@ -452,13 +509,14 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
                 _formatar_carga_horaria(totais["ch_teorica"]),
                 _formatar_carga_horaria(totais["ch_pratica"]),
                 _formatar_carga_horaria(totais["ch_extensao"]),
-                _formatar_carga_horaria(totais["ch_total"])
+                _formatar_carga_horaria(totais["ch_total"]),
+                ""
             ])
             
             tabela_matriz = Table(
                 dados_tabela,
                 repeatRows=1,
-                colWidths=[0.4 * cm, 7.2 * cm, 2.2 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.8 * cm]
+                colWidths=[0.4 * cm, 6.4 * cm, 2.0 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.8 * cm, 3.2 * cm]
             )
             tabela_matriz.setStyle(TableStyle([
                 ('BACKGROUND', (1, 0), (-1, 0), colors.HexColor('#0B5FA5')),

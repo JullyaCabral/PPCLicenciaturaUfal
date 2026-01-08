@@ -1343,7 +1343,7 @@ def main():
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Semestre": st.column_config.TextColumn("Período", width="small"),
+                    "Semestre": st.column_config.TextColumn("Semestre / Período", width="medium"),
                     "Nome": st.column_config.TextColumn("Nome do Componente", width="large"),
                     "Tipo": st.column_config.TextColumn("Tipo", width="small"),
                     "CH Semanal": st.column_config.NumberColumn("CH Semanal", width="small", format="%d"),
@@ -1351,7 +1351,8 @@ def main():
                     "CH Prática": st.column_config.NumberColumn("CH Prática", width="small", format="%.0fh"),
                     "CH Extensão": st.column_config.NumberColumn("CH Extensão", width="small", format="%.0fh"),
                     "CH Total": st.column_config.NumberColumn("CH Total", width="small", format="%.0fh"),
-                    "Núcleo": st.column_config.TextColumn("Núcleo", width="small")
+                    "Núcleo": st.column_config.TextColumn("Núcleo", width="small"),
+                    "Observação Núcleo": st.column_config.TextColumn("Observação Núcleo", width="large")
                 }
             )
             
