@@ -81,11 +81,11 @@ st.markdown("""
         color: #3d3d3d !important;
     }
     
-    /* Texto geral mais leve em cinza */
+    /* Texto geral */
     p, div, span, label {
         font-weight: 400 !important;
         font-style: normal !important;
-        color: #4a4a4a !important;
+        color: ##252829 !important;
     }
     
     /* Texto em negrito mais sutil */
@@ -114,11 +114,11 @@ st.markdown("""
         color: #1565c0 !important;
     }
     
-    .stWarning {
+    /*.stWarning {
         background-color: #fff3e0 !important;
         border-left: 4px solid #ff9800 !important;
         color: #e65100 !important;
-    }
+    }*/
     
     /* Links e botões com azul mais suave */
     a {
@@ -1366,5 +1366,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
