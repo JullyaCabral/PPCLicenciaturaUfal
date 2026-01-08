@@ -29,6 +29,7 @@ def validar_componente(componente: dict) -> tuple[bool, list[str]]:
     tipo = componente.get("tipo", "")
     nucleo = componente.get("nucleo", "")
     ch_extensao = componente.get("ch_extensao", 0)
+    ch_pratica = componente.get("ch_pratica", 0)
     ch_total = componente.get("ch_total", 0)
     
     # Validação: Se CH de extensão > 0, deve ser Núcleo III
@@ -55,10 +56,16 @@ def validar_componente(componente: dict) -> tuple[bool, list[str]]:
             erros.append("Núcleo II requer indicação das diretrizes específicas da área")
     
     if nucleo == "III":
+        if tipo != "Extensão":
+            erros.append("Núcleo III aceita apenas componentes do tipo Extensão")
         if not componente.get("descricao_extensao"):
             erros.append("Núcleo III requer indicação do vínculo com projeto extensionista")
+        if ch_extensao != ch_total:
+            erros.append("No Núcleo III, toda a carga horária deve ser registrada como Extensão")
     
     if nucleo == "IV":
+        if tipo != "Estágio":
+            erros.append("Núcleo IV aceita apenas componentes do tipo Estágio")
         if not componente.get("local_realizacao"):
             erros.append("Núcleo IV requer local de realização")
         if not componente.get("etapa_estagio"):
@@ -66,6 +73,8 @@ def validar_componente(componente: dict) -> tuple[bool, list[str]]:
         # Validação específica: Estágios devem ter pelo menos 400h
         if tipo == "Estágio" and ch_total < 400:
             erros.append("Estágios devem ter carga horária mínima de 400h")
+        if ch_pratica != ch_total:
+            erros.append("No Núcleo IV, a carga horária deve ser integralmente prática")
     
     return len(erros) == 0, erros
 

@@ -211,15 +211,15 @@ unsafe_allow_html=True
 
 # Temas do Núcleo I (Art. 13 a-i da Res. CNE/CP nº 4/2024)
 TEMAS_NUCLEO_I = [
-    "a) Princípios e fundamentos sociológicos, filosóficos, históricos e epistemológicos da educação",
-    "b) Princípios, valores e atitudes comprometidos com a justiça social, reconhecimento, respeito e apreço à diversidade, promoção da participação, da equidade e da inclusão e gestão democrática",
-    "c) Observação, análise, planejamento, desenvolvimento e avaliação de processos educativos, experiências pedagógicas e de situações de ensino e aprendizagem em instituições de Educação Básica",
-    "d) Conhecimento multidimensional e interdisciplinar sobre o ser humano e práticas educativas, incluindo conhecimento de processos de desenvolvimento de crianças, adolescentes, jovens e adultos, nas dimensões física, cognitiva, afetiva, estética, cultural, lúdica, artística, ética e biopsicossocial",
-    "e) Diagnóstico e análise das necessidades e aspirações dos diferentes segmentos da sociedade, relativas à educação, sendo capaz de identificar diferentes forças e interesses, de captar contradições e de considerá-los nos planos pedagógicos, no ensino e, consequentemente, nos processos de aprendizagem",
-    "f) Pesquisa e estudo da legislação educacional, dos processos de organização e gestão do trabalho dos profissionais do magistério da educação escolar básica, das políticas de financiamento, da avaliação e do currículo",
-    "g) Pesquisa e estudo das relações entre educação e trabalho, educação e diversidade, educação e comunicação, direitos humanos, cidadania, educação ambiental, entre outras problemáticas centrais da sociedade contemporânea",
-    "h) Estudos de aspectos éticos, didáticos e comportamentais no contexto do exercício profissional, articulando o saber acadêmico, a pesquisa, a extensão e a prática educativa",
-    "i) Conhecimento sobre diferentes estratégias de planejamento e avaliação das aprendizagens, centradas no desenvolvimento pleno dos estudantes da Educação Básica"
+    "a) princípios e fundamentos sociológicos, filosóficos, históricos e epistemológicos da educação;",
+    "b) princípios, valores e atitudes comprometidos com a justiça social, reconhecimento, respeito e apreço à diversidade, promoção da participação, da equidade e da inclusão e gestão democrática;",
+    "c) observação, análise, planejamento, desenvolvimento e avaliação de processos educativos, experiências pedagógicas e de situações de ensino e aprendizagem em instituições de Educação Básica;",
+    "d) conhecimento multidimensional e interdisciplinar sobre o ser humano e práticas educativas, incluindo conhecimento de processos de desenvolvimento de crianças, adolescentes, jovens e adultos, nas dimensões física, cognitiva, afetiva, estética, cultural, lúdica, artística, ética e biopsicossocial;",
+    "e) diagnóstico e análise das necessidades e aspirações dos diferentes segmentos da sociedade, relativas à educação, sendo capaz de identificar diferentes forças e interesses, de captar contradições e de considerá-los nos planos pedagógicos, no ensino e, consequentemente, nos processos de aprendizagem;",
+    "f) pesquisa e estudo da legislação educacional, dos processos de organização e gestão do trabalho dos profissionais do magistério da educação escolar básica, das políticas de financiamento, da avaliação e do currículo;",
+    "g) pesquisa e estudo das relações entre educação e trabalho, educação e diversidade, educação e comunicação, direitos humanos, cidadania, educação ambiental, entre outras problemáticas centrais da sociedade contemporânea;",
+    "h) estudos de aspectos éticos, didáticos e comportamentais no contexto do exercício profissional, articulando o saber acadêmico, a pesquisa, a extensão e a prática educativa; e",
+    "i) conhecimento sobre diferentes estratégias de planejamento e avaliação das aprendizagens, centradas no desenvolvimento pleno dos estudantes da Educação Básica."
 ]
 
 # Tipos de componentes disponíveis
@@ -232,6 +232,14 @@ TIPOS_COMPONENTES = [
     "Extensão",
     "Outro"
 ]
+
+# Mapeamento de tipos permitidos por núcleo curricular
+TIPOS_POR_NUCLEO = {
+    "I": ["Disciplina", "Módulo", "Bloco", "Outro"],
+    "II": ["Disciplina", "Módulo", "Bloco", "TCC", "Outro"],
+    "III": ["Extensão"],
+    "IV": ["Estágio"]
+}
 
 # Inicializar estado da sessão
 if "componentes" not in st.session_state:
@@ -249,12 +257,17 @@ def limpar_formulario():
                 "form_ch_pratica", "form_ch_extensao", "form_nucleo", "form_temas_nucleo_i",
                 "form_diretrizes_nucleo_ii", "form_descricao_extensao", "form_local_realizacao",
                 "form_etapa_estagio_opcao", "form_etapa_estagio_outro", "form_bloco", 
-                "form_observacoes", "form_nucleo_selecionado", "form_ch_preview"]:
+                "form_observacoes", "form_nucleo_selecionado", "form_ch_preview",
+                "form_marca_teorica", "form_marca_pratica", "form_ch_teorica_manual"]:
         if key == "form_semestre":
             valores_limpos[key] = 1
         elif key in ["form_aulas_semanais", "form_ch_manual", "form_ch_teorica", 
-                    "form_ch_pratica", "form_ch_extensao", "form_ch_preview"]:
+                    "form_ch_pratica", "form_ch_extensao", "form_ch_preview", "form_ch_teorica_manual"]:
             valores_limpos[key] = 0.0
+        elif key == "form_marca_teorica":
+            valores_limpos[key] = True
+        elif key == "form_marca_pratica":
+            valores_limpos[key] = False
         elif key == "form_temas_nucleo_i":
             valores_limpos[key] = []
         elif key == "form_nucleo_selecionado":
@@ -339,24 +352,25 @@ def obter_explicacao_nucleo(nucleo: str) -> str:
     """Retorna explicação detalhada sobre as regras do núcleo."""
     explicacoes = {
         "I": """
-        **NÚCLEO I – Formação Pedagógica**
+        **NÚCLEO I – Estudos de Formação Geral - EFG**
         
-        O Núcleo I deve ter **mínimo de 880 horas** e compreende a Formação Pedagógica.
+        Art. 13. Os cursos de formação inicial, respeitadas a diversidade nacional e a autonomia pedagógica das instituições, serão constituídos dos seguintes núcleos:
         
-        **Requisitos:**
-        - Deve selecionar **pelo menos um tema** do Art. 13 da Res. CNE/CP nº 4/2024
-        - Os temas cobrem princípios, fundamentos, didática, gestão e práticas educativas
+        I - Núcleo I – Estudos de Formação Geral - EFG: composto pelos conhecimentos científicos, educacionais e pedagógicos que fundamentam a compreensão do fenômeno educativo e da educação escolar e formam a base comum para todas as licenciaturas, articulando:
         
-        **Temas disponíveis (Art. 13 a-i):**
-        - Princípios e fundamentos sociológicos, filosóficos, históricos e epistemológicos da educação
-        - Princípios de justiça social, diversidade, equidade e inclusão
-        - Processos educativos e experiências pedagógicas
-        - Conhecimento multidimensional sobre o ser humano e práticas educativas
-        - Diagnóstico e análise das necessidades educacionais
-        - Legislação educacional, organização e gestão do trabalho docente
-        - Relações entre educação e trabalho, diversidade, comunicação, direitos humanos
-        - Aspectos éticos, didáticos e comportamentais no exercício profissional
-        - Estratégias de planejamento e avaliação das aprendizagens
+        a) princípios e fundamentos sociológicos, filosóficos, históricos e epistemológicos da educação;
+        b) princípios, valores e atitudes comprometidos com a justiça social, reconhecimento, respeito e apreço à diversidade, promoção da participação, da equidade e da inclusão e gestão democrática;
+        c) observação, análise, planejamento, desenvolvimento e avaliação de processos educativos, experiências pedagógicas e de situações de ensino e aprendizagem em instituições de Educação Básica;
+        d) conhecimento multidimensional e interdisciplinar sobre o ser humano e práticas educativas, incluindo conhecimento de processos de desenvolvimento de crianças, adolescentes, jovens e adultos, nas dimensões física, cognitiva, afetiva, estética, cultural, lúdica, artística, ética e biopsicossocial;
+        e) diagnóstico e análise das necessidades e aspirações dos diferentes segmentos da sociedade, relativas à educação, sendo capaz de identificar diferentes forças e interesses, de captar contradições e de considerá-los nos planos pedagógicos, no ensino e, consequentemente, nos processos de aprendizagem;
+        f) pesquisa e estudo da legislação educacional, dos processos de organização e gestão do trabalho dos profissionais do magistério da educação escolar básica, das políticas de financiamento, da avaliação e do currículo;
+        g) pesquisa e estudo das relações entre educação e trabalho, educação e diversidade, educação e comunicação, direitos humanos, cidadania, educação ambiental, entre outras problemáticas centrais da sociedade contemporânea;
+        h) estudos de aspectos éticos, didáticos e comportamentais no contexto do exercício profissional, articulando o saber acadêmico, a pesquisa, a extensão e a prática educativa; e
+        i) conhecimento sobre diferentes estratégias de planejamento e avaliação das aprendizagens, centradas no desenvolvimento pleno dos estudantes da Educação Básica.
+        
+        **Requisitos complementares:**
+        - Selecionar pelo menos um dos temas acima para cada componente.
+        - Garantir carga horária mínima de 880 horas neste núcleo.
         """,
         "II": """
         **NÚCLEO II – Formação Específica da Área de Conhecimento**
@@ -460,10 +474,9 @@ def exibir_regras_ppc():
         - **Disciplinas**: CH Total = Aulas Semanais × 18 horas
         - **Outros tipos** (Módulo, Bloco, Estágio, TCC, Extensão, Outro): CH Total informada manualmente
         
-        **Campos opcionais (podem ajudar nas análises):**
-        - CH Teórica
-        - CH Prática
-        - CH Extensão
+        **Distribuição da carga horária:**
+        - CH Teórica e CH Prática são definidas nas caixas de seleção do formulário principal
+        - CH de Extensão é atribuída automaticamente aos componentes do Núcleo III
         """)
     
     with st.expander("Validações Automáticas", expanded=True):
@@ -555,13 +568,22 @@ def main():
         
         Após selecionar o núcleo, clique em "Atualizar Informações" para ver os campos específicos:
         
-        - **Núcleo I (Formação Pedagógica)**: Selecione pelo menos um tema do Art. 13 (a-i)
-        - **Núcleo II (Formação Específica)**: Descreva a vinculação com as Diretrizes da área
-        - **Núcleo III (Extensão)**: Descreva o vínculo com projeto extensionista
-        - **Núcleo IV (Estágios)**: Informe local de realização e etapa do estágio
+        - **Núcleo I – Estudos de Formação Geral - EFG**: selecione pelo menos um dos temas previstos:
+          - a) princípios e fundamentos sociológicos, filosóficos, históricos e epistemológicos da educação;
+          - b) princípios, valores e atitudes comprometidos com a justiça social, reconhecimento, respeito e apreço à diversidade, promoção da participação, da equidade e da inclusão e gestão democrática;
+          - c) observação, análise, planejamento, desenvolvimento e avaliação de processos educativos, experiências pedagógicas e de situações de ensino e aprendizagem em instituições de Educação Básica;
+          - d) conhecimento multidimensional e interdisciplinar sobre o ser humano e práticas educativas, incluindo conhecimento de processos de desenvolvimento de crianças, adolescentes, jovens e adultos, nas dimensões física, cognitiva, afetiva, estética, cultural, lúdica, artística, ética e biopsicossocial;
+          - e) diagnóstico e análise das necessidades e aspirações dos diferentes segmentos da sociedade, relativas à educação, sendo capaz de identificar diferentes forças e interesses, de captar contradições e de considerá-los nos planos pedagógicos, no ensino e, consequentemente, nos processos de aprendizagem;
+          - f) pesquisa e estudo da legislação educacional, dos processos de organização e gestão do trabalho dos profissionais do magistério da educação escolar básica, das políticas de financiamento, da avaliação e do currículo;
+          - g) pesquisa e estudo das relações entre educação e trabalho, educação e diversidade, educação e comunicação, direitos humanos, cidadania, educação ambiental, entre outras problemáticas centrais da sociedade contemporânea;
+          - h) estudos de aspectos éticos, didáticos e comportamentais no contexto do exercício profissional, articulando o saber acadêmico, a pesquisa, a extensão e a prática educativa; e
+          - i) conhecimento sobre diferentes estratégias de planejamento e avaliação das aprendizagens, centradas no desenvolvimento pleno dos estudantes da Educação Básica.
+        - **Núcleo II (Formação Específica)**: Descreva a vinculação com as Diretrizes da área e informe manualmente a carga horária total do componente.
+        - **Núcleo III (Extensão)**: Descreva o vínculo com projeto extensionista. Toda a carga horária é registrada como Extensão e o tipo fica limitado a componentes extensionistas.
+        - **Núcleo IV (Estágios)**: Informe local de realização e etapa do estágio. Toda a carga horária é prática supervisionada e o tipo fica restrito a Estágio.
         
-        Campos opcionais que podem ajudar nas análises:
-        - CH Teórica, CH Prática, CH Extensão
+        Campos adicionais que podem ajudar nas análises:
+        - Distribuição Teórica/Prática (definida pelas caixas de seleção ao lado do formulário)
         - Bloco (se o componente faz parte de um grupo)
         - Observações
         
@@ -826,7 +848,7 @@ def main():
     
     with tab2:
         st.header("Cadastro de Componente Curricular")
-        st.info("**Como preencher**: Preencha os campos obrigatórios (marcados com *). Selecione o tipo de componente e o núcleo. O sistema valida automaticamente as regras de conformidade.")
+        st.info("**Como preencher**: Preencha os campos obrigatórios (marcados com *). Selecione o tipo de componente e o núcleo. As cargas teórica e prática são definidas pelas caixas de seleção ao lado do formulário (por padrão, a carga é teórica). Nos núcleos III e IV a alocação é automática (Extensão e Prática, respectivamente). O sistema valida automaticamente as regras de conformidade.")
         
         if st.session_state.get("limpar_formulario", False):
             valores_limpos = st.session_state.get("valores_limpos", {})
@@ -843,15 +865,20 @@ def main():
                    "form_ch_teorica", "form_ch_pratica", "form_ch_extensao", "form_nucleo", 
                    "form_temas_nucleo_i", "form_diretrizes_nucleo_ii", "form_descricao_extensao",
                    "form_local_realizacao", "form_etapa_estagio_opcao", "form_etapa_estagio_outro",
-                   "form_bloco", "form_observacoes", "form_nucleo_selecionado", "form_ch_preview"]:
+                   "form_bloco", "form_observacoes", "form_nucleo_selecionado", "form_ch_preview",
+                   "form_marca_teorica", "form_marca_pratica", "form_ch_teorica_manual"]:
             if key not in st.session_state:
                 if key == "form_semestre":
                     st.session_state[key] = 1
                 elif key == "form_aulas_semanais":
                     st.session_state[key] = 2  # Valor padrão para disciplinas
                 elif key in ["form_ch_manual", "form_ch_teorica", 
-                            "form_ch_pratica", "form_ch_extensao", "form_ch_preview"]:
+                            "form_ch_pratica", "form_ch_extensao", "form_ch_preview", "form_ch_teorica_manual"]:
                     st.session_state[key] = 0.0
+                elif key == "form_marca_teorica":
+                    st.session_state[key] = True
+                elif key == "form_marca_pratica":
+                    st.session_state[key] = False
                 elif key == "form_temas_nucleo_i":
                     st.session_state[key] = []
                 elif key in ["form_nucleo_selecionado", "form_nucleo", "form_etapa_estagio_opcao"]:
@@ -876,17 +903,32 @@ def main():
                 key="form_nome"
             )
             
-            tipo_index = 0
-            if st.session_state.form_tipo in TIPOS_COMPONENTES:
-                tipo_index = TIPOS_COMPONENTES.index(st.session_state.form_tipo)
+            nucleo_opcoes = ["I", "II", "III", "IV"]
+            nucleo_index = 0
+            if st.session_state.form_nucleo in nucleo_opcoes:
+                nucleo_index = nucleo_opcoes.index(st.session_state.form_nucleo)
+            
+            nucleo = st.selectbox(
+                "Núcleo *",
+                options=nucleo_opcoes,
+                index=nucleo_index,
+                key="form_nucleo"
+            )
+            
+            tipos_disponiveis = TIPOS_POR_NUCLEO.get(nucleo, TIPOS_COMPONENTES)
+            if not tipos_disponiveis:
+                tipos_disponiveis = TIPOS_COMPONENTES
+            
+            if st.session_state.form_tipo not in tipos_disponiveis:
+                st.session_state.form_tipo = tipos_disponiveis[0]
             
             tipo = st.selectbox(
                 "Tipo de Componente *",
-                options=TIPOS_COMPONENTES,
-                index=tipo_index,
+                options=tipos_disponiveis,
                 key="form_tipo"
             )
             
+            ch_total_calc = 0.0
             if tipo == "Disciplina":
                 aulas_semanais = st.number_input(
                     "Número de Aulas Semanais *",
@@ -895,11 +937,20 @@ def main():
                     step=1,
                     key="form_aulas_semanais"
                 )
-                ch_manual = 0
-                ch_total_calc = calcular_ch_total(tipo, int(aulas_semanais))
-                st.session_state.form_ch_preview = ch_total_calc
+                if nucleo == "II":
+                    ch_manual = st.number_input(
+                        "CH Total (horas) *",
+                        min_value=0.0,
+                        step=1.0,
+                        key="form_ch_manual"
+                    )
+                    ch_total_calc = ch_manual
+                else:
+                    ch_total_calc = calcular_ch_total(tipo, int(aulas_semanais))
+                    st.session_state.form_ch_manual = 0.0
+                st.session_state.form_aulas_semanais = aulas_semanais
             else:
-                aulas_semanais = None
+                st.session_state.form_aulas_semanais = 0
                 ch_manual = st.number_input(
                     "CH Total (horas) *",
                     min_value=0.0,
@@ -907,24 +958,8 @@ def main():
                     key="form_ch_manual"
                 )
                 ch_total_calc = ch_manual
-                st.session_state.form_ch_preview = ch_total_calc
             
-            if tipo == "Estágio" and st.session_state.form_nucleo != "IV":
-                st.session_state.form_nucleo = "IV"
-            
-            if st.session_state.form_ch_extensao > 0 and st.session_state.form_nucleo != "III":
-                st.session_state.form_nucleo = "III"
-            
-            nucleo_index = 0
-            if st.session_state.form_nucleo in ["I", "II", "III", "IV"]:
-                nucleo_index = ["I", "II", "III", "IV"].index(st.session_state.form_nucleo)
-            
-            nucleo = st.selectbox(
-                "Núcleo *",
-                options=["I", "II", "III", "IV"],
-                index=nucleo_index,
-                key="form_nucleo"
-            )
+            st.session_state.form_ch_preview = ch_total_calc
             
             atualizar_info = st.button("Atualizar Informações", type="primary", use_container_width=True)
             if atualizar_info:
@@ -934,33 +969,88 @@ def main():
             
             st.markdown("---")
             st.subheader("Preview da Carga Horária")
+            delta_msg = "Disciplina: Aulas Semanais × 18h" if tipo == "Disciplina" and nucleo != "II" else "CH informada manualmente"
             st.metric("CH Total do Componente", f"{st.session_state.form_ch_preview:.0f}h", 
-                     delta="Disciplina: Aulas Semanais × 18h" if tipo == "Disciplina" else "CH informada manualmente",
+                     delta=delta_msg,
                      delta_color="normal")
-            if tipo != "Disciplina":
-                st.caption("Para Disciplinas, a CH é calculada automaticamente (Aulas Semanais × 18h)")
+            if tipo == "Disciplina" and nucleo == "II":
+                st.caption("Para componentes do Núcleo II, informe manualmente a carga horária total.")
+            elif tipo != "Disciplina":
+                st.caption("Para tipos diferentes de disciplina, informe manualmente a carga horária total.")
         
         with col2:
-            ch_teorica = st.number_input(
-                "CH Teórica (opcional)",
-                min_value=0.0,
-                step=1.0,
-                key="form_ch_teorica"
-            )
+            carga_total = st.session_state.form_ch_preview
+            ch_teorica_calc = 0.0
+            ch_pratica_calc = 0.0
+            ch_extensao_calc = 0.0
             
-            ch_pratica = st.number_input(
-                "CH Prática (opcional)",
-                min_value=0.0,
-                step=1.0,
-                key="form_ch_pratica"
-            )
+            if nucleo == "III":
+                st.session_state.form_marca_teorica = False
+                st.session_state.form_marca_pratica = False
+                st.session_state.form_ch_teorica_manual = 0.0
+                ch_teorica_calc = 0.0
+                ch_pratica_calc = 0.0
+                ch_extensao_calc = carga_total
+                st.info("No Núcleo III, toda a carga horária do componente é contabilizada como Extensão.")
+            elif nucleo == "IV":
+                st.session_state.form_marca_teorica = False
+                st.session_state.form_marca_pratica = True
+                st.session_state.form_ch_teorica_manual = 0.0
+                ch_teorica_calc = 0.0
+                ch_pratica_calc = carga_total
+                ch_extensao_calc = 0.0
+                st.info("No Núcleo IV, a carga horária é integralmente prática supervisionada.")
+            else:
+                if st.session_state.form_ch_teorica_manual > carga_total:
+                    st.session_state.form_ch_teorica_manual = carga_total
+                st.session_state.form_ch_extensao = 0.0
+                
+                st.checkbox(
+                    "Carga horária teórica",
+                    key="form_marca_teorica",
+                    help="Marque se a carga horária deve ser alocada como Teórica."
+                )
+                st.checkbox(
+                    "Carga horária prática",
+                    key="form_marca_pratica",
+                    help="Marque se a carga horária deve ser alocada como Prática."
+                )
+                marca_teorica = st.session_state.form_marca_teorica
+                marca_pratica = st.session_state.form_marca_pratica
+                
+                if not (marca_teorica or marca_pratica):
+                    st.warning("Selecione ao menos uma classificação. A opção Teórica será marcada por padrão.")
+                    st.session_state.form_marca_teorica = True
+                    st.session_state.form_marca_pratica = False
+                    marca_teorica = True
+                    marca_pratica = False
+                
+                if marca_teorica and marca_pratica:
+                    valor_manual = st.number_input(
+                        "Defina a carga horária Teórica (a Prática será o restante)",
+                        min_value=0.0,
+                        step=1.0,
+                        key="form_ch_teorica_manual"
+                    )
+                    if valor_manual > carga_total:
+                        valor_manual = carga_total
+                        st.session_state.form_ch_teorica_manual = carga_total
+                    ch_teorica_calc = valor_manual
+                    ch_pratica_calc = max(carga_total - valor_manual, 0.0)
+                elif marca_teorica:
+                    ch_teorica_calc = carga_total
+                    ch_pratica_calc = 0.0
+                    st.session_state.form_ch_teorica_manual = carga_total
+                else:
+                    ch_teorica_calc = 0.0
+                    ch_pratica_calc = carga_total
+                    st.session_state.form_ch_teorica_manual = 0.0
+            st.session_state.form_ch_teorica = ch_teorica_calc
+            st.session_state.form_ch_pratica = ch_pratica_calc
+            st.session_state.form_ch_extensao = ch_extensao_calc
             
-            ch_extensao = st.number_input(
-                "CH Extensão (opcional)",
-                min_value=0.0,
-                step=1.0,
-                key="form_ch_extensao",
-                help="Se > 0, o componente deve pertencer ao Núcleo III"
+            st.caption(
+                f"Distribuição atual: {ch_teorica_calc:.0f}h Teórica | {ch_pratica_calc:.0f}h Prática | {ch_extensao_calc:.0f}h Extensão"
             )
             
             if "form_faz_parte_bloco" not in st.session_state:
@@ -1136,7 +1226,10 @@ def main():
                     "form_faz_parte_bloco": False,
                     "form_observacoes": "",
                     "form_nucleo_selecionado": "",
-                    "form_ch_preview": 0.0
+                    "form_ch_preview": 0.0,
+                    "form_marca_teorica": True,
+                    "form_marca_pratica": False,
+                    "form_ch_teorica_manual": 0.0
                 }
                 st.session_state["limpar_formulario"] = True
                 st.session_state["valores_limpos"] = valores_limpos
@@ -1327,7 +1420,7 @@ def main():
                         for comp in sorted(componentes_nucleo, key=lambda x: (x.get("semestre", 0), x.get("nome", ""))):
                             st.write(f"- **{comp.get('nome')}** - Semestre {comp.get('semestre')} - {comp.get('ch_total', 0):.0f}h - {comp.get('tipo')}")
                             if nucleo == "I" and comp.get("temas_nucleo_i"):
-                                st.caption(f"  Temas: {', '.join([t.split(')')[0] + ')' for t in comp.get('temas_nucleo_i', [])])}")
+                                st.caption("  Temas selecionados: " + " ".join(comp.get("temas_nucleo_i", [])))
                             elif nucleo == "III" and comp.get("descricao_extensao"):
                                 st.caption(f"  Extensão: {comp.get('descricao_extensao')[:100]}...")
                             elif nucleo == "IV" and comp.get("local_realizacao"):
