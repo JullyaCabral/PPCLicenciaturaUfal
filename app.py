@@ -225,6 +225,12 @@ div[data-baseweb="tag"] *{
 
   z-index:10001 !important;
 }
+
+  /* Remover ícone padrão quebrado do expander (keyboard_arrow_*) */
+div[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"] {
+  display: none !important;
+}
+
 </style>
     """,
     unsafe_allow_html=True
@@ -1359,6 +1365,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
