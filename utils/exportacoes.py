@@ -4,100 +4,34 @@ Responsável por gerar arquivos CSV, XLSX e PDF.
 """
 
 import pandas as pd
-from io import BytesIO
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 
 
-def exportar_csv(componentes: list, caminho_arquivo: str) -> str:
+def exportar_csv(componentes: list, caminho_arquivo: str, tabela: str = "componentes") -> str:
     """
-    Exporta os componentes curriculares para arquivo CSV (formato para migração SIGAA).
+    Exporta dados para CSV, permitindo escolher qual tabela será gerada.
     
     Args:
         componentes: Lista de dicionários com os componentes
         caminho_arquivo: Caminho onde o arquivo será salvo
+        tabela: Nome da tabela desejada (componentes, matriz, resumo_nucleo)
     
     Returns:
         Caminho do arquivo salvo
     """
-    # Preparar dados para CSV (formato SIGAA)
-    dados_csv = []
+    tabela_normalizada = (tabela or "componentes").lower()
     
-    for comp in componentes:
-        linha = {
-            "Semestre": comp.get("semestre", ""),
-            "Nome": comp.get("nome", ""),
-            "Tipo": comp.get("tipo", ""),
-            "Aulas Semanais": comp.get("aulas_semanais", ""),
-            "CH Total": comp.get("ch_total", ""),
-            "CH Teórica": comp.get("ch_teorica", ""),
-            "CH Prática": comp.get("ch_pratica", ""),
-            "CH Extensão": comp.get("ch_extensao", ""),
-            "Núcleo": comp.get("nucleo", ""),
-            "Temas Núcleo I": "; ".join(comp.get("temas_nucleo_i", [])) if comp.get("temas_nucleo_i") else "",
-            "Diretrizes Núcleo II": comp.get("diretrizes_nucleo_ii", ""),
-            "Descrição Extensão": comp.get("descricao_extensao", ""),
-            "Local Realização": comp.get("local_realizacao", ""),
-            "Etapa Estágio": comp.get("etapa_estagio", ""),
-            "Bloco": comp.get("bloco", ""),
-            "Observações": comp.get("observacoes", "")
-        }
-        dados_csv.append(linha)
-    
-    df = pd.DataFrame(dados_csv)
-    df.to_csv(caminho_arquivo, index=False, encoding="utf-8-sig", sep=";")
-    
-    return caminho_arquivo
-
-
-def exportar_xlsx(componentes: list, caminho_arquivo: str) -> str:
-    """
-    Exporta os componentes curriculares para arquivo XLSX (planilha de verificação).
-    Cria múltiplas abas: Matriz (por período), Por Núcleo (resumo), Componentes (lista completa).
-    
-    Args:
-        componentes: Lista de dicionários com os componentes
-        caminho_arquivo: Caminho onde o arquivo será salvo
-    
-    Returns:
-        Caminho do arquivo salvo
-    """
-    from openpyxl.utils import get_column_letter
-    
-    # Criar arquivo XLSX com múltiplas abas
-    with pd.ExcelWriter(caminho_arquivo, engine='openpyxl') as writer:
-        # ABA 1: Matriz por Período
-        df_matriz = gerar_matriz_por_periodo(componentes)
-        df_matriz.to_excel(writer, sheet_name="Matriz", index=False)
-        
-        worksheet_matriz = writer.sheets["Matriz"]
-        for idx, col in enumerate(df_matriz.columns, 1):
-            max_length = max(
-                df_matriz[col].astype(str).apply(len).max() if len(df_matriz) > 0 else 0,
-                len(col)
-            )
-            col_letter = get_column_letter(idx)
-            worksheet_matriz.column_dimensions[col_letter].width = min(max_length + 2, 50)
-        
-        # ABA 2: Por Núcleo (resumo)
-        df_nucleo = gerar_resumo_por_semestre_nucleo(componentes)
-        df_nucleo.to_excel(writer, sheet_name="Por Núcleo", index=False)
-        
-        worksheet_nucleo = writer.sheets["Por Núcleo"]
-        for idx, col in enumerate(df_nucleo.columns, 1):
-            max_length = max(
-                df_nucleo[col].astype(str).apply(len).max() if len(df_nucleo) > 0 else 0,
-                len(col)
-            )
-            col_letter = get_column_letter(idx)
-            worksheet_nucleo.column_dimensions[col_letter].width = min(max_length + 2, 50)
-        
-        # ABA 3: Componentes (lista completa para auditoria)
-        dados_componentes = []
+    if tabela_normalizada == "matriz":
+        df = gerar_matriz_por_periodo(componentes)
+    elif tabela_normalizada in {"resumo", "resumo_nucleo", "por_nucleo"}:
+        df = gerar_resumo_por_semestre_nucleo(componentes)
+    else:
+        dados_csv = []
         for comp in componentes:
             linha = {
                 "Semestre": comp.get("semestre", ""),
@@ -117,19 +51,92 @@ def exportar_xlsx(componentes: list, caminho_arquivo: str) -> str:
                 "Bloco": comp.get("bloco", ""),
                 "Observações": comp.get("observacoes", "")
             }
-            dados_componentes.append(linha)
+            dados_csv.append(linha)
+        df = pd.DataFrame(dados_csv)
+    
+    df.to_csv(caminho_arquivo, index=False, encoding="utf-8-sig", sep=";")
+    
+    return caminho_arquivo
+
+
+def exportar_xlsx(componentes: list, caminho_arquivo: str, abas: list[str] | None = None) -> str:
+    """
+    Exporta dados para arquivo XLSX, permitindo selecionar quais abas devem ser geradas.
+    
+    Args:
+        componentes: Lista de dicionários com os componentes
+        caminho_arquivo: Caminho onde o arquivo será salvo
+        abas: Lista de abas desejadas (matriz, resumo_nucleo, componentes)
+    
+    Returns:
+        Caminho do arquivo salvo
+    """
+    from openpyxl.utils import get_column_letter
+    
+    abas_padrao = ["matriz", "resumo_nucleo", "componentes"]
+    abas_normalizadas = [aba.lower() for aba in (abas or abas_padrao) if aba]
+    
+    if not abas_normalizadas:
+        raise ValueError("Selecione ao menos uma aba para exportação.")
+    
+    with pd.ExcelWriter(caminho_arquivo, engine='openpyxl') as writer:
+        if "matriz" in abas_normalizadas:
+            df_matriz = gerar_matriz_por_periodo(componentes)
+            df_matriz.to_excel(writer, sheet_name="Matriz", index=False)
+            worksheet_matriz = writer.sheets["Matriz"]
+            for idx, col in enumerate(df_matriz.columns, 1):
+                max_length = max(
+                    df_matriz[col].astype(str).apply(len).max() if len(df_matriz) > 0 else 0,
+                    len(col)
+                )
+                col_letter = get_column_letter(idx)
+                worksheet_matriz.column_dimensions[col_letter].width = min(max_length + 2, 50)
         
-        df_componentes = pd.DataFrame(dados_componentes)
-        df_componentes.to_excel(writer, sheet_name="Componentes", index=False)
+        if "resumo_nucleo" in abas_normalizadas or "por_nucleo" in abas_normalizadas:
+            df_nucleo = gerar_resumo_por_semestre_nucleo(componentes)
+            df_nucleo.to_excel(writer, sheet_name="Por Núcleo", index=False)
+            worksheet_nucleo = writer.sheets["Por Núcleo"]
+            for idx, col in enumerate(df_nucleo.columns, 1):
+                max_length = max(
+                    df_nucleo[col].astype(str).apply(len).max() if len(df_nucleo) > 0 else 0,
+                    len(col)
+                )
+                col_letter = get_column_letter(idx)
+                worksheet_nucleo.column_dimensions[col_letter].width = min(max_length + 2, 50)
         
-        worksheet_comp = writer.sheets["Componentes"]
-        for idx, col in enumerate(df_componentes.columns, 1):
-            max_length = max(
-                df_componentes[col].astype(str).apply(len).max() if len(df_componentes) > 0 else 0,
-                len(col)
-            )
-            col_letter = get_column_letter(idx)
-            worksheet_comp.column_dimensions[col_letter].width = min(max_length + 2, 50)
+        if "componentes" in abas_normalizadas:
+            dados_componentes = []
+            for comp in componentes:
+                linha = {
+                    "Semestre": comp.get("semestre", ""),
+                    "Nome": comp.get("nome", ""),
+                    "Tipo": comp.get("tipo", ""),
+                    "Aulas Semanais": comp.get("aulas_semanais", ""),
+                    "CH Total": comp.get("ch_total", ""),
+                    "CH Teórica": comp.get("ch_teorica", ""),
+                    "CH Prática": comp.get("ch_pratica", ""),
+                    "CH Extensão": comp.get("ch_extensao", ""),
+                    "Núcleo": comp.get("nucleo", ""),
+                    "Temas Núcleo I": "; ".join(comp.get("temas_nucleo_i", [])) if comp.get("temas_nucleo_i") else "",
+                    "Diretrizes Núcleo II": comp.get("diretrizes_nucleo_ii", ""),
+                    "Descrição Extensão": comp.get("descricao_extensao", ""),
+                    "Local Realização": comp.get("local_realizacao", ""),
+                    "Etapa Estágio": comp.get("etapa_estagio", ""),
+                    "Bloco": comp.get("bloco", ""),
+                    "Observações": comp.get("observacoes", "")
+                }
+                dados_componentes.append(linha)
+            
+            df_componentes = pd.DataFrame(dados_componentes)
+            df_componentes.to_excel(writer, sheet_name="Componentes", index=False)
+            worksheet_comp = writer.sheets["Componentes"]
+            for idx, col in enumerate(df_componentes.columns, 1):
+                max_length = max(
+                    df_componentes[col].astype(str).apply(len).max() if len(df_componentes) > 0 else 0,
+                    len(col)
+                )
+                col_letter = get_column_letter(idx)
+                worksheet_comp.column_dimensions[col_letter].width = min(max_length + 2, 50)
     
     return caminho_arquivo
 
@@ -282,13 +289,63 @@ def gerar_resumo_por_semestre_nucleo(componentes: list) -> pd.DataFrame:
     return pd.DataFrame(dados_resumo)
 
 
-def exportar_pdf(componentes: list, caminho_arquivo: str) -> str:
+def _agrupar_componentes_por_semestre(componentes: list) -> list[dict]:
     """
-    Exporta um relatório em PDF com quadro-resumo de CH por semestre e núcleo.
+    Agrupa componentes por semestre, ordenando e calculando totais auxiliares.
+    """
+    grupos: dict[int | str, list[dict]] = {}
+    
+    for comp in componentes:
+        semestre_val = comp.get("semestre")
+        if isinstance(semestre_val, (int, float)) and semestre_val > 0:
+            chave = int(semestre_val)
+        else:
+            chave = "Sem período"
+        grupos.setdefault(chave, []).append(comp)
+    
+    resultado = []
+    for chave in sorted(grupos, key=lambda c: (9999 if isinstance(c, str) else c, c)):
+        componentes_semestre = sorted(grupos[chave], key=lambda x: (x.get("nome") or "").lower())
+        ch_total = sum(c.get("ch_total", 0) for c in componentes_semestre)
+        ch_teorica = sum(c.get("ch_teorica", 0) for c in componentes_semestre)
+        ch_pratica = sum(c.get("ch_pratica", 0) for c in componentes_semestre)
+        ch_extensao = sum(c.get("ch_extensao", 0) for c in componentes_semestre)
+        resultado.append({
+            "rotulo": str(chave),
+            "componentes": componentes_semestre,
+            "totais": {
+                "ch_total": ch_total,
+                "ch_teorica": ch_teorica,
+                "ch_pratica": ch_pratica,
+                "ch_extensao": ch_extensao
+            }
+        })
+    return resultado
+
+
+def _formatar_carga_horaria(valor: float | int | str | None) -> str:
+    if valor in (None, "", 0):
+        return ""
+    try:
+        return f"{float(valor):.0f}h"
+    except (ValueError, TypeError):
+        return str(valor)
+
+
+def _formatar_aulas_semanais(valor: float | int | None) -> str:
+    if isinstance(valor, (int, float)) and valor > 0:
+        return f"{int(valor)}"
+    return ""
+
+
+def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | None = None) -> str:
+    """
+    Exporta um relatório em PDF configurável, com possibilidade de escolher seções.
     
     Args:
         componentes: Lista de dicionários com os componentes
         caminho_arquivo: Caminho onde o arquivo será salvo
+        secoes: Lista de seções desejadas (matriz, resumo_nucleo, resumo_geral, conformidade)
     
     Returns:
         Caminho do arquivo salvo
@@ -297,192 +354,255 @@ def exportar_pdf(componentes: list, caminho_arquivo: str) -> str:
         calcular_ch_total_curso,
         calcular_ch_por_nucleo,
         calcular_percentual_extensao,
-        calcular_percentual_pratica_pedagogica
+        calcular_percentual_pratica_pedagogica,
+        obter_ch_minima_por_nucleo,
+        validar_ch_minima_nucleo
     )
+    from utils.validacoes import validar_curso_completo
     
-    # Criar documento PDF
-    doc = SimpleDocTemplate(caminho_arquivo, pagesize=landscape(A4))
+    secoes_padrao = ["matriz", "resumo_nucleo", "resumo_geral", "conformidade"]
+    secoes_normalizadas = [sec.lower() for sec in (secoes or secoes_padrao) if sec]
+    
+    if not secoes_normalizadas:
+        raise ValueError("Selecione ao menos uma seção para exportação.")
+    
+    doc = SimpleDocTemplate(
+        caminho_arquivo,
+        pagesize=A4,
+        leftMargin=1.4 * cm,
+        rightMargin=1.2 * cm,
+        topMargin=1.6 * cm,
+        bottomMargin=1.4 * cm
+    )
     story = []
     
-    # Estilos
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=18,
-        textColor=colors.HexColor('#1f4788'),
-        spaceAfter=30,
+        fontSize=16,
+        textColor=colors.HexColor('#0B5FA5'),
+        spaceAfter=18,
         alignment=TA_CENTER
     )
-    
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor('#1f4788'),
-        spaceAfter=12
+        fontSize=12,
+        textColor=colors.HexColor('#0B5FA5'),
+        spaceAfter=10,
+        leading=14
+    )
+    subheading_style = ParagraphStyle(
+        'CustomSubHeading',
+        parent=styles['Heading3'],
+        fontSize=11,
+        textColor=colors.HexColor('#1F2A37'),
+        spaceAfter=6,
+        leading=13
+    )
+    table_text_style = ParagraphStyle(
+        'TableText',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        alignment=TA_LEFT
+    )
+    table_header_style = ParagraphStyle(
+        'TableHeader',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        alignment=TA_CENTER,
+        textColor=colors.whitesmoke
     )
     
-    # Título
     story.append(Paragraph("Relatório de Carga Horária - Componentes Curriculares", title_style))
-    story.append(Spacer(1, 0.5*cm))
+    story.append(Spacer(1, 0.25 * cm))
     
-    # Matriz Curricular Principal por Período
-    story.append(Paragraph("Matriz Curricular por Período", heading_style))
-    df_matriz = gerar_matriz_por_periodo(componentes)
+    if "matriz" in secoes_normalizadas:
+        story.append(Paragraph("Matriz Curricular por Período", heading_style))
+        for bloco in _agrupar_componentes_por_semestre(componentes):
+            story.append(Paragraph(f"Período {bloco['rotulo']}", subheading_style))
+            dados_tabela = [
+                ["", Paragraph("Nome do Componente", table_header_style), Paragraph("Tipo", table_header_style),
+                 Paragraph("CH Semanal", table_header_style), Paragraph("CH Teórica", table_header_style),
+                 Paragraph("CH Prática", table_header_style), Paragraph("CH Extensão", table_header_style),
+                 Paragraph("CH Total", table_header_style)]
+            ]
+            
+            for comp in bloco["componentes"]:
+                dados_tabela.append([
+                    "",
+                    Paragraph(comp.get("nome", "") or "-", table_text_style),
+                    Paragraph(comp.get("tipo", "") or "-", table_text_style),
+                    _formatar_aulas_semanais(comp.get("aulas_semanais")),
+                    _formatar_carga_horaria(comp.get("ch_teorica")),
+                    _formatar_carga_horaria(comp.get("ch_pratica")),
+                    _formatar_carga_horaria(comp.get("ch_extensao")),
+                    _formatar_carga_horaria(comp.get("ch_total"))
+                ])
+            
+            totais = bloco["totais"]
+            dados_tabela.append([
+                "",
+                Paragraph("<b>TOTAL DO PERÍODO</b>", table_text_style),
+                "",
+                "",
+                _formatar_carga_horaria(totais["ch_teorica"]),
+                _formatar_carga_horaria(totais["ch_pratica"]),
+                _formatar_carga_horaria(totais["ch_extensao"]),
+                _formatar_carga_horaria(totais["ch_total"])
+            ])
+            
+            tabela_matriz = Table(
+                dados_tabela,
+                repeatRows=1,
+                colWidths=[0.4 * cm, 7.2 * cm, 2.2 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.8 * cm]
+            )
+            tabela_matriz.setStyle(TableStyle([
+                ('BACKGROUND', (1, 0), (-1, 0), colors.HexColor('#0B5FA5')),
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#DDE7F5')),
+                ('TEXTCOLOR', (1, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (1, 1), (1, -2), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTNAME', (1, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 8),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('ROWBACKGROUNDS', (1, 1), (-1, -2), [colors.white, colors.HexColor('#F6F8FC')]),
+                ('BACKGROUND', (1, -1), (-1, -1), colors.HexColor('#E5EDF9')),
+                ('LINEBEFORE', (0, 0), (0, -1), 3, colors.HexColor('#0B5FA5')),
+                ('GRID', (1, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            
+            story.append(tabela_matriz)
+            story.append(Spacer(1, 0.35 * cm))
     
-    # Preparar dados da tabela matriz (limitar colunas para melhor visualização)
-    colunas_matriz = ["Semestre", "Nome", "CH Semanal", "CH Teórica", "CH Prática", "CH Extensão", "CH Total"]
-    dados_tabela_matriz = [colunas_matriz]
+    if "resumo_nucleo" in secoes_normalizadas or "por_nucleo" in secoes_normalizadas:
+        story.append(Paragraph("Quadro-Resumo: CH por Semestre e Núcleo", heading_style))
+        df_resumo = gerar_resumo_por_semestre_nucleo(componentes)
+        dados_resumo = [list(df_resumo.columns)]
+        for _, row in df_resumo.iterrows():
+            dados_resumo.append([
+                str(row["Semestre"]),
+                _formatar_carga_horaria(row["CH Núc. I"]),
+                _formatar_carga_horaria(row["CH Núc. II"]),
+                _formatar_carga_horaria(row["CH Núc. III"]),
+                _formatar_carga_horaria(row["CH Núc. IV"]),
+                _formatar_carga_horaria(row["Total"])
+            ])
+        
+        tabela_resumo_nucleo = Table(
+            dados_resumo,
+            repeatRows=1,
+            colWidths=[2.5 * cm, 2.6 * cm, 2.6 * cm, 2.6 * cm, 2.6 * cm, 2.6 * cm]
+        )
+        tabela_resumo_nucleo.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B5FA5')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F6F8FC')]),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E5EDF9')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(tabela_resumo_nucleo)
+        story.append(Spacer(1, 0.35 * cm))
     
-    for _, row in df_matriz.iterrows():
-        linha_matriz = []
-        for col in colunas_matriz:
-            valor = row[col] if col in df_matriz.columns else ""
-            if isinstance(valor, (int, float)) and col != "Semestre":
-                if col == "CH Semanal" and valor == "":
-                    linha_matriz.append("")
-                else:
-                    linha_matriz.append(f"{valor:.0f}h" if valor != "" else "")
-            else:
-                linha_matriz.append(str(valor))
-        dados_tabela_matriz.append(linha_matriz)
+    if "resumo_geral" in secoes_normalizadas:
+        story.append(Paragraph("Resumo Geral do Curso", heading_style))
+        ch_total = calcular_ch_total_curso(componentes)
+        ch_i = calcular_ch_por_nucleo(componentes, "I")
+        ch_ii = calcular_ch_por_nucleo(componentes, "II")
+        ch_iii = calcular_ch_por_nucleo(componentes, "III")
+        ch_iv = calcular_ch_por_nucleo(componentes, "IV")
+        perc_extensao = calcular_percentual_extensao(componentes)
+        perc_pratica = calcular_percentual_pratica_pedagogica(componentes)
+        
+        resumo_geral = [
+            ["Carga Horária Total do Curso", _formatar_carga_horaria(ch_total)],
+            ["CH Núcleo I", _formatar_carga_horaria(ch_i)],
+            ["CH Núcleo II", _formatar_carga_horaria(ch_ii)],
+            ["CH Núcleo III", _formatar_carga_horaria(ch_iii)],
+            ["CH Núcleo IV", _formatar_carga_horaria(ch_iv)],
+            ["Percentual de Extensão", f"{perc_extensao:.2f}%"],
+            ["Percentual de Prática Pedagógica", f"{perc_pratica:.2f}%"]
+        ]
+        
+        tabela_resumo = Table(resumo_geral, colWidths=[9.0 * cm, 5.0 * cm])
+        tabela_resumo.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B5FA5')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(tabela_resumo)
+        story.append(Spacer(1, 0.35 * cm))
+    else:
+        # Necessário para cálculo de conformidade
+        ch_total = calcular_ch_total_curso(componentes)
+        ch_i = calcular_ch_por_nucleo(componentes, "I")
+        ch_ii = calcular_ch_por_nucleo(componentes, "II")
+        ch_iii = calcular_ch_por_nucleo(componentes, "III")
+        ch_iv = calcular_ch_por_nucleo(componentes, "IV")
+        perc_extensao = calcular_percentual_extensao(componentes)
     
-    # Criar tabela matriz (ajustar tamanhos)
-    tabela_matriz = Table(dados_tabela_matriz, repeatRows=1, colWidths=[2*cm, 6*cm, 2*cm, 2*cm, 2*cm, 2*cm, 2*cm])
-    tabela_matriz.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-    ]))
+    if "conformidade" in secoes_normalizadas:
+        story.append(Paragraph("Resumo de Conformidade", heading_style))
+        resultado_validacao = validar_curso_completo(componentes)
+        conformidade_itens = []
+        
+        for nucleo in ["I", "II", "III", "IV"]:
+            ch_atual = calcular_ch_por_nucleo(componentes, nucleo)
+            ch_minima = obter_ch_minima_por_nucleo(nucleo)
+            valido, _ = validar_ch_minima_nucleo(ch_atual, ch_minima)
+            status = "✓" if valido else "✗"
+            conformidade_itens.append([f"{status} Núcleo {nucleo} (mín. {ch_minima:.0f}h)", _formatar_carga_horaria(ch_atual)])
+        
+        status_total = "✓" if ch_total >= 3200 else "✗"
+        status_ext = "✓" if perc_extensao >= 10 else "✗"
+        
+        conformidade_itens.extend([
+            [f"{status_total} CH Total do Curso (mín. 3200h)", _formatar_carga_horaria(ch_total)],
+            [f"{status_ext} Percentual de Extensão (mín. 10%)", f"{perc_extensao:.2f}%"]
+        ])
+        
+        if resultado_validacao["erros"]:
+            conformidade_itens.append([f"✗ Pendências detectadas ({len(resultado_validacao['erros'])})", ""])
+        else:
+            conformidade_itens.append(["✓ Curso conforme com todas as validações principais", ""])
+        
+        tabela_conformidade = Table(conformidade_itens, colWidths=[9.0 * cm, 5.0 * cm])
+        tabela_conformidade.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B5FA5')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(tabela_conformidade)
     
-    story.append(tabela_matriz)
-    story.append(Spacer(1, 0.5*cm))
-    story.append(PageBreak())
-    
-    # Resumo por semestre e núcleo
-    story.append(Paragraph("Quadro-Resumo: CH por Semestre e Núcleo", heading_style))
-    
-    df_resumo = gerar_resumo_por_semestre_nucleo(componentes)
-    
-    # Preparar dados da tabela
-    dados_tabela = [df_resumo.columns.tolist()]
-    for _, row in df_resumo.iterrows():
-        linha = []
-        for col in df_resumo.columns:
-            valor = row[col]
-            if isinstance(valor, (int, float)) and col != "Semestre":
-                linha.append(f"{valor:.0f}h")
-            else:
-                linha.append(str(valor))
-        dados_tabela.append(linha)
-    
-    # Criar tabela
-    tabela = Table(dados_tabela, repeatRows=1)
-    tabela.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-    ]))
-    
-    story.append(tabela)
-    story.append(Spacer(1, 0.5*cm))
-    
-    # Resumo geral
-    story.append(Paragraph("Resumo Geral do Curso", heading_style))
-    
-    ch_total = calcular_ch_total_curso(componentes)
-    ch_i = calcular_ch_por_nucleo(componentes, "I")
-    ch_ii = calcular_ch_por_nucleo(componentes, "II")
-    ch_iii = calcular_ch_por_nucleo(componentes, "III")
-    ch_iv = calcular_ch_por_nucleo(componentes, "IV")
-    perc_extensao = calcular_percentual_extensao(componentes)
-    perc_pratica = calcular_percentual_pratica_pedagogica(componentes)
-    
-    resumo_geral = [
-        ["Carga Horária Total do Curso", f"{ch_total:.0f}h"],
-        ["CH Núcleo I", f"{ch_i:.0f}h"],
-        ["CH Núcleo II", f"{ch_ii:.0f}h"],
-        ["CH Núcleo III", f"{ch_iii:.0f}h"],
-        ["CH Núcleo IV", f"{ch_iv:.0f}h"],
-        ["Percentual de Extensão", f"{perc_extensao:.2f}%"],
-        ["Percentual de Prática Pedagógica", f"{perc_pratica:.2f}%"]
-    ]
-    
-    tabela_resumo = Table(resumo_geral, colWidths=[8*cm, 4*cm])
-    tabela_resumo.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-    ]))
-    
-    story.append(tabela_resumo)
-    story.append(Spacer(1, 0.5*cm))
-    
-    # Resumo de Conformidade
-    story.append(Paragraph("Resumo de Conformidade", heading_style))
-    from utils.validacoes import validar_curso_completo
-    from utils.calculos import obter_ch_minima_por_nucleo, validar_ch_minima_nucleo
-    
-    resultado_validacao = validar_curso_completo(componentes)
-    
-    conformidade_itens = []
-    
-    # CH mínima por núcleo
-    for nucleo in ["I", "II", "III", "IV"]:
-        ch_atual = calcular_ch_por_nucleo(componentes, nucleo)
-        ch_minima = obter_ch_minima_por_nucleo(nucleo)
-        valido, mensagem = validar_ch_minima_nucleo(ch_atual, ch_minima)
-        status = "✓" if valido else "✗"
-        conformidade_itens.append([f"{status} Núcleo {nucleo} (mín. {ch_minima:.0f}h)", f"{ch_atual:.0f}h"])
-    
-    # CH total do curso
-    status_total = "✓" if ch_total >= 3200 else "✗"
-    conformidade_itens.append([f"{status_total} CH Total do Curso (mín. 3200h)", f"{ch_total:.0f}h"])
-    
-    # Percentual extensão
-    status_ext = "✓" if perc_extensao >= 10 else "✗"
-    conformidade_itens.append([f"{status_ext} Percentual de Extensão (mín. 10%)", f"{perc_extensao:.2f}%"])
-    
-    tabela_conformidade = Table(conformidade_itens, colWidths=[10*cm, 4*cm])
-    tabela_conformidade.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-    ]))
-    
-    story.append(tabela_conformidade)
-    
-    # Gerar PDF
     doc.build(story)
-    
     return caminho_arquivo
 

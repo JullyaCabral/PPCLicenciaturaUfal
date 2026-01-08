@@ -627,12 +627,12 @@ def main():
         
         **6. Exportar Relatórios**
         
-        Na aba "Exportar", você pode gerar:
-        - **CSV**: Formato para migração no sistema SIGAA (UTF-8 com BOM, delimitador ponto e vírgula)
-        - **XLSX**: Planilha Excel com múltiplas abas (Matriz, Por Núcleo, Componentes)
-        - **PDF**: Relatório completo com matriz curricular, resumo por núcleo e conformidade
+        Na aba "Exportar", você pode gerar arquivos personalizados:
+        - **CSV**: Formato para migração no sistema SIGAA (UTF-8 com BOM, delimitador ponto e vírgula). Escolha qual tabela exportar (Componentes, Matriz ou Resumo por Núcleo).
+        - **XLSX**: Planilha Excel em que você define quais abas (Matriz, Resumo por Núcleo, Componentes) deseja incluir.
+        - **PDF**: Relatório A4 em orientação retrato, com ajuste automático de colunas e divisão visual por período. Selecione as seções que farão parte do arquivo.
         
-        Clique no botão correspondente e depois em "Download" para salvar o arquivo.
+        Após escolher o conteúdo desejado, clique no botão correspondente e em seguida em "Download" para salvar o arquivo.
         
         **7. Consultar Regras**
         
@@ -788,60 +788,112 @@ def main():
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
-            st.info("**Como exportar**: Clique nos botões abaixo para gerar os arquivos. Os arquivos são salvos na pasta `exportacoes/` e podem ser baixados diretamente.")
+            st.info("**Como exportar**: Selecione abaixo quais tabelas ou seções deseja gerar em cada formato. Os arquivos são salvos em `exportacoes/` e ficam disponíveis para download imediato.")
             
             col_exp1, col_exp2, col_exp3 = st.columns(3)
             
+            csv_opcoes = {
+                "Componentes (formato SIGAA)": "componentes",
+                "Matriz Curricular por Período": "matriz",
+                "Resumo por Semestre e Núcleo": "resumo_nucleo"
+            }
             with col_exp1:
                 st.subheader("CSV (Migração SIGAA)")
-                st.caption("Formato para importação no sistema SIGAA. Codificação UTF-8 com BOM, delimitador ponto e vírgula.")
-                if st.button("Exportar CSV", key="btn_csv"):
-                    caminho_csv = f"exportacoes/componentes_{timestamp}.csv"
-                    exportar_csv(st.session_state.componentes, caminho_csv)
-                    st.success("Arquivo CSV gerado!")
+                st.caption("Escolha qual tabela gerar em CSV. Codificação UTF-8 com BOM e delimitador ponto e vírgula.")
+                csv_label = st.selectbox(
+                    "Tabela para exportar em CSV",
+                    list(csv_opcoes.keys()),
+                    key="export_csv_select",
+                    help="O CSV é gerado individualmente para cada tabela."
+                )
+                if st.button("Gerar CSV selecionado", key="btn_csv"):
+                    tabela_csv = csv_opcoes[csv_label]
+                    nome_csv = f"{tabela_csv}_{timestamp}.csv"
+                    caminho_csv = os.path.join("exportacoes", nome_csv)
+                    exportar_csv(st.session_state.componentes, caminho_csv, tabela=tabela_csv)
+                    st.success(f"Arquivo CSV '{csv_label}' gerado!")
                     
                     with open(caminho_csv, "rb") as f:
                         st.download_button(
-                            label="Download CSV",
+                            label=f"Download CSV ({csv_label})",
                             data=f.read(),
-                            file_name=f"componentes_{timestamp}.csv",
+                            file_name=nome_csv,
                             mime="text/csv",
-                            key="dl_csv"
+                            key=f"dl_csv_{timestamp}_{tabela_csv}"
                         )
             
+            abas_opcoes = {
+                "Matriz Curricular": "matriz",
+                "Resumo por Núcleo": "resumo_nucleo",
+                "Lista de Componentes": "componentes"
+            }
             with col_exp2:
                 st.subheader("XLSX (Planilha)")
-                st.caption("Planilha Excel com múltiplas abas: Matriz, Por Núcleo e Componentes. Ideal para verificação e análise.")
-                if st.button("Exportar XLSX", key="btn_xlsx"):
-                    caminho_xlsx = f"exportacoes/componentes_{timestamp}.xlsx"
-                    exportar_xlsx(st.session_state.componentes, caminho_xlsx)
-                    st.success("Arquivo XLSX gerado!")
-                    
-                    with open(caminho_xlsx, "rb") as f:
-                        st.download_button(
-                            label="Download XLSX",
-                            data=f.read(),
-                            file_name=f"componentes_{timestamp}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key="dl_xlsx"
-                        )
+                st.caption("Selecione as abas que deseja incluir na planilha Excel.")
+                abas_escolhidas = st.multiselect(
+                    "Abas da planilha",
+                    list(abas_opcoes.keys()),
+                    default=list(abas_opcoes.keys()),
+                    key="export_xlsx_multiselect",
+                    help="Escolha ao menos uma aba para montar a planilha."
+                )
+                
+                if st.button("Gerar XLSX selecionado", key="btn_xlsx"):
+                    if not abas_escolhidas:
+                        st.warning("Selecione ao menos uma aba para gerar a planilha XLSX.")
+                    else:
+                        abas_codigos = [abas_opcoes[label] for label in abas_escolhidas]
+                        slug_abas = "-".join(abas_codigos)
+                        nome_xlsx = f"planilha_{slug_abas}_{timestamp}.xlsx"
+                        caminho_xlsx = os.path.join("exportacoes", nome_xlsx)
+                        exportar_xlsx(st.session_state.componentes, caminho_xlsx, abas=abas_codigos)
+                        st.success("Arquivo XLSX gerado com as abas selecionadas!")
+                        
+                        with open(caminho_xlsx, "rb") as f:
+                            st.download_button(
+                                label="Download XLSX",
+                                data=f.read(),
+                                file_name=nome_xlsx,
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                key=f"dl_xlsx_{timestamp}_{slug_abas}"
+                            )
             
+            secoes_opcoes = {
+                "Matriz Curricular por Período": "matriz",
+                "Quadro-Resumo por Núcleo": "resumo_nucleo",
+                "Resumo Geral do Curso": "resumo_geral",
+                "Resumo de Conformidade": "conformidade"
+            }
             with col_exp3:
                 st.subheader("PDF (Relatório)")
-                st.caption("Relatório completo em PDF com matriz curricular, resumo por núcleo e conformidade. Formato A4 paisagem.")
-                if st.button("Gerar PDF", key="btn_pdf"):
-                    caminho_pdf = f"exportacoes/relatorio_{timestamp}.pdf"
-                    exportar_pdf(st.session_state.componentes, caminho_pdf)
-                    st.success("Arquivo PDF gerado!")
-                    
-                    with open(caminho_pdf, "rb") as f:
-                        st.download_button(
-                            label="Download PDF",
-                            data=f.read(),
-                            file_name=f"relatorio_{timestamp}.pdf",
-                            mime="application/pdf",
-                            key="dl_pdf"
-                        )
+                st.caption("Selecione as seções do relatório PDF. O arquivo é gerado em formato A4 retrato, com colunas ajustadas e divisão visual por período.")
+                secoes_escolhidas = st.multiselect(
+                    "Seções do relatório",
+                    list(secoes_opcoes.keys()),
+                    default=list(secoes_opcoes.keys()),
+                    key="export_pdf_multiselect",
+                    help="Escolha as seções que deseja incluir no PDF."
+                )
+                
+                if st.button("Gerar PDF selecionado", key="btn_pdf"):
+                    if not secoes_escolhidas:
+                        st.warning("Selecione ao menos uma seção para gerar o PDF.")
+                    else:
+                        secoes_codigos = [secoes_opcoes[label] for label in secoes_escolhidas]
+                        slug_secoes = "-".join(secoes_codigos)
+                        nome_pdf = f"relatorio_{slug_secoes}_{timestamp}.pdf"
+                        caminho_pdf = os.path.join("exportacoes", nome_pdf)
+                        exportar_pdf(st.session_state.componentes, caminho_pdf, secoes=secoes_codigos)
+                        st.success("Arquivo PDF gerado com as seções selecionadas!")
+                        
+                        with open(caminho_pdf, "rb") as f:
+                            st.download_button(
+                                label="Download PDF",
+                                data=f.read(),
+                                file_name=nome_pdf,
+                                mime="application/pdf",
+                                key=f"dl_pdf_{timestamp}_{slug_secoes}"
+                            )
     
     with tab7:
         exibir_regras_ppc()
@@ -947,10 +999,7 @@ def main():
                     ch_total_calc = ch_manual
                 else:
                     ch_total_calc = calcular_ch_total(tipo, int(aulas_semanais))
-                    st.session_state.form_ch_manual = 0.0
-                st.session_state.form_aulas_semanais = aulas_semanais
             else:
-                st.session_state.form_aulas_semanais = 0
                 ch_manual = st.number_input(
                     "CH Total (horas) *",
                     min_value=0.0,
@@ -1001,8 +1050,6 @@ def main():
                 ch_extensao_calc = 0.0
                 st.info("No Núcleo IV, a carga horária é integralmente prática supervisionada.")
             else:
-                if st.session_state.form_ch_teorica_manual > carga_total:
-                    st.session_state.form_ch_teorica_manual = carga_total
                 st.session_state.form_ch_extensao = 0.0
                 
                 st.checkbox(
@@ -1033,18 +1080,16 @@ def main():
                         key="form_ch_teorica_manual"
                     )
                     if valor_manual > carga_total:
+                        st.warning("A carga teórica não pode exceder a carga total do componente.")
                         valor_manual = carga_total
-                        st.session_state.form_ch_teorica_manual = carga_total
                     ch_teorica_calc = valor_manual
                     ch_pratica_calc = max(carga_total - valor_manual, 0.0)
                 elif marca_teorica:
                     ch_teorica_calc = carga_total
                     ch_pratica_calc = 0.0
-                    st.session_state.form_ch_teorica_manual = carga_total
                 else:
                     ch_teorica_calc = 0.0
                     ch_pratica_calc = carga_total
-                    st.session_state.form_ch_teorica_manual = 0.0
             st.session_state.form_ch_teorica = ch_teorica_calc
             st.session_state.form_ch_pratica = ch_pratica_calc
             st.session_state.form_ch_extensao = ch_extensao_calc
