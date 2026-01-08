@@ -97,7 +97,7 @@ st.markdown("""
     
     /* Cores de destaque - manter azul mas mais suave */
     .stSuccess {
-        background-color: #e8f5e9 !important;
+        background-color: #add8ec !important;
         border-left: 4px solid #4caf50 !important;
         color: #2e7d32 !important;
     }
@@ -143,7 +143,7 @@ st.markdown("""
     button[aria-selected="true"] span,
     div[data-baseweb="select"] button[aria-selected="true"],
     div[data-baseweb="select"] [aria-selected="true"] {
-        color: white !important;
+        color: white;
     }
     
     /* Específico para tags selecionadas no multiselect */
@@ -1366,4 +1366,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
