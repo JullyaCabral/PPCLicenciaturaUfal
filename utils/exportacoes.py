@@ -570,14 +570,14 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
             
             col_widths = [
                 5.9 * cm,  # Nome
-                1.9 * cm,  # Tipo
-                1.25 * cm,  # CH Semanal
+                1.85 * cm,  # Tipo
+                1.4 * cm,  # CH Semanal
                 1.25 * cm,  # CH Teórica
                 1.25 * cm,  # CH Prática
-                1.25 * cm,  # CH Extensão
+                1.4 * cm,  # CH Extensão
                 1.25 * cm,  # CH Total
                 1.25 * cm,  # Núcleo
-                3.0 * cm   # Observação
+                2.70 * cm   # Observação
             ]
             
             tabela_matriz = Table(dados_tabela, repeatRows=1, colWidths=col_widths)
