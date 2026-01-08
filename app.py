@@ -29,7 +29,7 @@ st.set_page_config(
 
 # Estilos personalizados CSS
 st.markdown(
-    """
+"""
 <style>
 :root{
   --ufal-blue:#0B5FA5;
@@ -47,44 +47,46 @@ st.markdown(
   --ufal-danger-bg:#FDECEC;
 }
 
+/* Base do app */
 html, body, .stApp{
   background:var(--ufal-bg) !important;
   color:var(--ufal-text) !important;
-  font-family:Verdana, Geneva, Tahoma, sans-serif !important;
-  font-size:13px !important;
-  line-height:1.4 !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
+  font-size:13.5px !important;
+  line-height:1.45 !important;
 }
 
+/* Texto geral */
 .stMarkdown, .stText, .stCaption, p, div, span, label{
   color:var(--ufal-text) !important;
-  font-family:Verdana, Geneva, Tahoma, sans-serif !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
 }
 
+/* Títulos */
 h1{
   font-size:1.30rem !important;
-  font-weight:700 !important;
+  font-weight:600 !important;
   margin:0.25rem 0 !important;
-  color:var(--ufal-text) !important;
 }
 h2{
   font-size:1.12rem !important;
-  font-weight:700 !important;
+  font-weight:600 !important;
   margin:0.75rem 0 0.25rem 0 !important;
-  color:var(--ufal-text) !important;
 }
 h3{
   font-size:1.02rem !important;
-  font-weight:700 !important;
+  font-weight:600 !important;
   margin:0.50rem 0 0.25rem 0 !important;
-  color:var(--ufal-text) !important;
 }
 
+/* Divisórias */
 hr{
   border:none !important;
   border-top:1px solid var(--ufal-border) !important;
   margin:0.75rem 0 !important;
 }
 
+/* Links */
 a, a:visited{
   color:var(--ufal-blue) !important;
   text-decoration:underline !important;
@@ -93,6 +95,7 @@ a:hover{
   color:var(--ufal-blue-hover) !important;
 }
 
+/* Inputs */
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea,
@@ -103,6 +106,7 @@ div[data-baseweb="select"] > div{
   color:var(--ufal-text) !important;
 }
 
+/* Foco acessível */
 .stTextInput input:focus,
 .stNumberInput input:focus,
 .stTextArea textarea:focus,
@@ -111,9 +115,9 @@ button:focus,
 button:focus-visible{
   outline:3px solid rgba(11,95,165,0.35) !important;
   outline-offset:2px !important;
-  box-shadow:none !important;
 }
 
+/* Botões – padrão único azul */
 .stButton > button,
 div[data-testid="stDownloadButton"] > button,
 button[kind="primary"]{
@@ -122,7 +126,7 @@ button[kind="primary"]{
   color:#FFFFFF !important;
   border-radius:6px !important;
   padding:0.45rem 0.9rem !important;
-  font-weight:700 !important;
+  font-weight:600 !important;
 }
 
 .stButton > button *,
@@ -146,101 +150,80 @@ button[kind="primary"]:active{
 }
 
 .stButton > button:disabled,
-div[data-testid="stDownloadButton"] > button:disabled,
-button[kind="primary"]:disabled{
+div[data-testid="stDownloadButton"] > button:disabled{
   opacity:0.55 !important;
   cursor:not-allowed !important;
 }
 
-div[data-baseweb="select"] [role="combobox"],
-div[data-baseweb="select"] [role="combobox"] *{
+/* Dropdown / Selectbox – fonte compacta e legível */
+div[data-baseweb="select"],
+div[data-baseweb="select"] *{
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
+  font-size:13px !important;
+}
+
+/* Dropdown opções */
+div[data-baseweb="select"] ul[role="listbox"] li{
   color:var(--ufal-text) !important;
 }
 
-div[data-baseweb="select"] ul[role="listbox"] li,
-div[data-baseweb="select"] ul[role="listbox"] li *{
-  color:var(--ufal-text) !important;
-}
-
+/* Opção selecionada */
 div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"]{
   background-color:var(--ufal-blue) !important;
 }
-
 div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] *{
   color:#FFFFFF !important;
 }
 
+/* Tags do multiselect */
 div[data-baseweb="tag"]{
   background-color:var(--ufal-blue) !important;
   border:1px solid var(--ufal-blue) !important;
   color:#FFFFFF !important;
 }
-
 div[data-baseweb="tag"] *{
   color:#FFFFFF !important;
 }
 
+/* Tabelas */
 .stDataFrame{
   border:1px solid var(--ufal-border) !important;
   border-radius:6px !important;
   overflow:hidden !important;
 }
 
+/* Layout */
 .stImage{ margin-bottom:0 !important; }
 [data-testid="column"]{ padding-right:10px !important; }
 
+/* Backup expander flutuante */
 #ufal-backup-menu{
   position:relative !important;
   z-index:9999 !important;
 }
 
-#ufal-backup-menu div[data-testid="stExpander"]{
-  position:relative !important;
-  z-index:9999 !important;
-}
-
-#ufal-backup-menu div[data-testid="stExpander"] details{
-  position:relative !important;
-  z-index:9999 !important;
-}
-
-#ufal-backup-menu div[data-testid="stExpander"] details > summary{
-  position:relative !important;
-  z-index:10000 !important;
-}
-
-#ufal-backup-menu div[data-testid="stExpander"] details[open] > div{
+#ufal-backup-menu div[data-testid="stExpander"] details[open] > div,
+#ufal-backup-menu div[data-testid*="expanderContent"]{
   position:absolute !important;
   right:0 !important;
   top:calc(100% + 6px) !important;
-
   background:#FFFFFF !important;
   border:1px solid var(--ufal-border) !important;
   border-radius:6px !important;
   box-shadow:0 8px 24px rgba(0,0,0,0.18) !important;
-
   padding:12px !important;
   min-width:320px !important;
   max-width:420px !important;
-
   z-index:10001 !important;
 }
 
-  /* Remover ícone padrão quebrado do expander (keyboard_arrow_*) */
-div[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"] {
-  display: none !important;
+/* Remover ícone quebrado do expander */
+div[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"]{
+  display:none !important;
 }
-
-/* Fonte apenas para dropdowns (selectbox / multiselect) */
-div[data-baseweb="select"],
-div[data-baseweb="select"] * {
-  font-family: Arial, Helvetica, sans-serif !important;
-  font-size: 13px !important;
-}
-
 </style>
-    """,
-    unsafe_allow_html=True
+""",
+unsafe_allow_html=True
 )
 
 # Temas do Núcleo I (Art. 13 a-i da Res. CNE/CP nº 4/2024)
@@ -1372,6 +1355,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
