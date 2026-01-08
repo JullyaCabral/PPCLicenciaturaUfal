@@ -4,7 +4,7 @@ Sistema web para cadastro, validação e organização de componentes curricular
 
 ## Sobre o Sistema
 
-O Sistema de Componentes Curriculares foi desenvolvido pela Universidade Federal de Alagoas para facilitar o processo de estruturação curricular de cursos de Licenciatura. O sistema oferece uma interface intuitiva para cadastro de componentes, validação automática de conformidade com as normas, visualização da matriz curricular organizada e exportação de relatórios.
+O Sistema de Componentes Curriculares foi desenvolvido pela equipe de bolsistas de Computação da PROGRAD/UFAL para facilitar o processo de estruturação curricular de cursos de Licenciatura. O sistema oferece uma interface intuitiva para cadastro de componentes, validação automática de conformidade com as normas, visualização da matriz curricular organizada e exportação de relatórios.
 
 ## Funcionalidades Principais
 
@@ -78,13 +78,6 @@ projeto_curriculo/
 
 **Recomendação**: Sempre realize o backup manual dos seus dados na aba "Exportar" após cadastrar componentes. Caso feche o site sem fazer backup, os dados serão perdidos e não poderão ser restaurados.
 
-### Outras Notas
-
-- Os arquivos exportados são salvos na pasta `exportacoes/`
-- Para trabalho permanente, sempre exporte os dados após o cadastro
-- O formato CSV utiliza ponto e vírgula (;) como delimitador e codificação UTF-8 com BOM para compatibilidade com SIGAA
-- Utilize a funcionalidade de backup JSON na aba "Exportar" para salvar seus dados de forma segura
-
 ## Público-Alvo
 
 Professores e coordenadores de curso universitário que precisam:
@@ -103,3 +96,4 @@ Este projeto é destinado ao uso acadêmico e institucional da Universidade Fede
 ## Contato
 
 Para dúvidas ou suporte, entre em contato com a coordenação do curso ou o suporte técnico da universidade.
+
