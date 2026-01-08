@@ -56,28 +56,27 @@ html, body, .stApp{
   line-height:1.45 !important;
 }
 
-/* Texto geral */
-.stMarkdown, .stText, .stCaption, p, div, span, label{
+/* Texto geral (IMPORTANTE: NÃO aplicar em span para não quebrar ícones) */
+.stMarkdown, .stText, .stCaption, p, div, label{
   color:var(--ufal-text) !important;
   font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
 }
 
+/* Restaurar fonte de ícones (resolve keyboard_arrow_... nos dropdowns/controles) */
+.material-icons,
+span.material-icons,
+i.material-icons,
+[data-testid="stIconMaterial"],
+[data-testid="stIconMaterial"] *{
+  font-family: "Material Icons" !important;
+  font-feature-settings: "liga" 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
 /* Títulos */
-h1{
-  font-size:1.30rem !important;
-  font-weight:600 !important;
-  margin:0.25rem 0 !important;
-}
-h2{
-  font-size:1.12rem !important;
-  font-weight:600 !important;
-  margin:0.75rem 0 0.25rem 0 !important;
-}
-h3{
-  font-size:1.02rem !important;
-  font-weight:600 !important;
-  margin:0.50rem 0 0.25rem 0 !important;
-}
+h1{ font-size:1.30rem !important; font-weight:600 !important; margin:0.25rem 0 !important; }
+h2{ font-size:1.12rem !important; font-weight:600 !important; margin:0.75rem 0 0.25rem 0 !important; }
+h3{ font-size:1.02rem !important; font-weight:600 !important; margin:0.50rem 0 0.25rem 0 !important; }
 
 /* Divisórias */
 hr{
@@ -87,13 +86,8 @@ hr{
 }
 
 /* Links */
-a, a:visited{
-  color:var(--ufal-blue) !important;
-  text-decoration:underline !important;
-}
-a:hover{
-  color:var(--ufal-blue-hover) !important;
-}
+a, a:visited{ color:var(--ufal-blue) !important; text-decoration:underline !important; }
+a:hover{ color:var(--ufal-blue-hover) !important; }
 
 /* Inputs */
 .stTextInput input,
@@ -104,6 +98,7 @@ div[data-baseweb="select"] > div{
   border-radius:6px !important;
   background:#FFFFFF !important;
   color:var(--ufal-text) !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
 }
 
 /* Foco acessível */
@@ -117,7 +112,7 @@ button:focus-visible{
   outline-offset:2px !important;
 }
 
-/* Botões – padrão único azul */
+/* Botões – padrão único azul + texto branco */
 .stButton > button,
 div[data-testid="stDownloadButton"] > button,
 button[kind="primary"]{
@@ -127,10 +122,11 @@ button[kind="primary"]{
   border-radius:6px !important;
   padding:0.45rem 0.9rem !important;
   font-weight:600 !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
 }
 
-.stButton > button *,
-div[data-testid="stDownloadButton"] > button *,
+.stButton > button * ,
+div[data-testid="stDownloadButton"] > button * ,
 button[kind="primary"] *{
   color:#FFFFFF !important;
 }
@@ -155,19 +151,15 @@ div[data-testid="stDownloadButton"] > button:disabled{
   cursor:not-allowed !important;
 }
 
-/* Dropdown / Selectbox – fonte compacta e legível */
+/* Dropdown / Selectbox */
 div[data-baseweb="select"],
 div[data-baseweb="select"] *{
   font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
   font-size:13px !important;
-}
-
-/* Dropdown opções */
-div[data-baseweb="select"] ul[role="listbox"] li{
   color:var(--ufal-text) !important;
 }
 
-/* Opção selecionada */
+/* Opção selecionada no dropdown */
 div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"]{
   background-color:var(--ufal-blue) !important;
 }
@@ -212,12 +204,12 @@ div[data-baseweb="tag"] *{
   border-radius:6px !important;
   box-shadow:0 8px 24px rgba(0,0,0,0.18) !important;
   padding:12px !important;
-  min-width:500px !important;
-  max-width:500px !important;
+  min-width:320px !important;
+  max-width:420px !important;
   z-index:10001 !important;
 }
 
-/* Remover ícone quebrado do expander */
+/* (Opcional) esconder ícone do expander se ainda aparecer quebrado */
 div[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"]{
   display:none !important;
 }
@@ -1355,6 +1347,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
