@@ -231,6 +231,13 @@ div[data-testid="stExpander"] summary span[data-testid="stExpanderIcon"] {
   display: none !important;
 }
 
+/* Fonte apenas para dropdowns (selectbox / multiselect) */
+div[data-baseweb="select"],
+div[data-baseweb="select"] * {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 13px !important;
+}
+
 </style>
     """,
     unsafe_allow_html=True
@@ -1365,6 +1372,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
