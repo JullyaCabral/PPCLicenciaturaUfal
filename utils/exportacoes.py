@@ -569,15 +569,15 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
                 estilos_especificos.append(('BACKGROUND', (0, linha_total_idx), (-1, linha_total_idx), colors.HexColor('#F2F5FA')))
             
             col_widths = [
-                5.8 * cm,  # Nome
+                5.9 * cm,  # Nome
                 1.9 * cm,  # Tipo
-                1.05 * cm,  # CH Semanal
-                1.05 * cm,  # CH Teórica
-                1.05 * cm,  # CH Prática
-                1.05 * cm,  # CH Extensão
-                1.05 * cm,  # CH Total
-                0.9 * cm,  # Núcleo
-                1.8 * cm   # Observação
+                1.25 * cm,  # CH Semanal
+                1.25 * cm,  # CH Teórica
+                1.25 * cm,  # CH Prática
+                1.25 * cm,  # CH Extensão
+                1.25 * cm,  # CH Total
+                1.25 * cm,  # Núcleo
+                3.0 * cm   # Observação
             ]
             
             tabela_matriz = Table(dados_tabela, repeatRows=1, colWidths=col_widths)
