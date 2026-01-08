@@ -28,231 +28,160 @@ st.set_page_config(
 )
 
 # Estilos personalizados CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
-    /* Importar fonte Inter (leve e moderna) */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    /* Ajustar espaçamento entre logo e título */
-    .stImage {
-        margin-bottom: 0 !important;
-    }
-    
-    /* Colunas para logo e título */
-    [data-testid="column"] {
-        padding-right: 10px !important;
-    }
-    
-    /* Aplicar fonte Inter em todo o app */
-    html, body, [class*="css"], .stApp, .stMarkdown, .stText, .stDataFrame, .stSelectbox, .stTextInput, .stNumberInput, .stTextArea, .stButton {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        font-style: normal !important;
-        color: #333333 !important;
-    }
-    
-    /* Título principal reduzido ainda mais */
-    h1 {
-        font-size: 1.5rem !important;
-        font-weight: 600 !important;
-        font-style: normal !important;
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.25rem !important;
-        color: #1a1a1a !important;
-    }
-    
-    /* Reduzir espaçamento após hr/divisórias */
-    hr {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Headers mais leves com cores cinza */
-    h2 {
-        font-size: 1.35rem !important;
-        font-weight: 500 !important;
-        font-style: normal !important;
-        color: #2d2d2d !important;
-    }
-    
-    h3 {
-        font-size: 1.15rem !important;
-        font-weight: 500 !important;
-        font-style: normal !important;
-        color: #3d3d3d !important;
-    }
-    
-    /* Texto geral */
-    p, div, span, label {
-        font-weight: 400 !important;
-        font-style: normal !important;
-        color: ##252829 !important;
-    }
-    
-    /* Texto em negrito mais sutil */
-    strong, b {
-        font-weight: 600 !important;
-        font-style: normal !important;
-        color: #2d2d2d !important;
-    }
-    
-    /* Cores de destaque - manter azul mas mais suave */
-    .stSuccess {
-        background-color: #add8ec !important;
-        border-left: 4px solid #4caf50 !important;
-        color: #2e7d32 !important;
-    }
-    
-    .stError {
-        background-color: #ffebee !important;
-        border-left: 4px solid #f44336 !important;
-        color: #c62828 !important;
-    }
-    
-    .stInfo {
-        background-color: #e3f2fd !important;
-        border-left: 4px solid #2196f3 !important;
-        color: #1565c0 !important;
-    }
-    
-    /*.stWarning {
-        background-color: #fff3e0 !important;
-        border-left: 4px solid #ff9800 !important;
-        color: #e65100 !important;
-    }*/
-    
-    /* Links e botões com azul mais suave */
-    a {
-        color: #1976d2 !important;
-    }
-    
-    /* Inputs com bordas cinza */
-    .stTextInput>div>div>input, .stNumberInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>select {
-        border-color: #bdbdbd !important;
-    }
-    
-    /* Tabelas com cores suaves */
-    .stDataFrame {
-        border: 1px solid #e0e0e0 !important;
-    }
-    
-    /* Cor do texto selecionado no multiselect do Núcleo I */
-    div[data-baseweb="select"] [role="option"][aria-selected="true"],
-    div[data-baseweb="select"] [role="option"][aria-selected="true"] span,
-    div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"],
-    div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] span,
-    button[aria-selected="true"] span,
-    div[data-baseweb="select"] button[aria-selected="true"],
-    div[data-baseweb="select"] [aria-selected="true"] {
-        color: white;
-    }
-    
-    /* Específico para tags selecionadas no multiselect */
-    div[data-baseweb="tag"] {
-        background-color: #2196f3 !important;
-        color: white !important;
-    }
-    
-    div[data-baseweb="tag"] span {
-        color: white !important;
-    }
-    
-    /* Cor do texto dos botões - branco em fundo azul */
-    .stButton > button {
-        color: white !important;
-        background-color: #2196f3 !important;
-    }
-    
-    .stButton > button:hover {
-        color: white !important;
-        background-color: #1976d2 !important;
-    }
-    
-    .stButton > button:active {
-        color: white !important;
-        background-color: #1565c0 !important;
-    }
-    
-    /* Botões de download */
-    .stDownloadButton > button {
-        color: white !important;
-    }
-    
-    /* Botão primário específico */
-    button[kind="primary"] {
-        color: white !important;
-    }
+:root{
+  --ufal-blue: #0B5FA5;
+  --ufal-blue-hover: #084C84;
+  --ufal-blue-active: #063A66;
+  --ufal-bg: #FFFFFF;
+  --ufal-surface: #F7F9FB;
+  --ufal-border: #D7DEE6;
+  --ufal-text: #1F2A37;
+  --ufal-muted: #5B6B7A;
+  --ufal-danger: #C62828;
+  --ufal-danger-bg: #FDECEC;
+}
 
-     /* Botão de download (backup JSON) */
-    div[data-testid="stDownloadButton"] > button {
-        background-color: #1f77b4;   /* azul institucional */
-        color: white !important;
-        border-radius: 6px;
-        padding: 0.5em 1em;
-        border: none;
-        font-weight: 600;
-    }
+html, body, .stApp {
+  background: var(--ufal-bg) !important;
+  color: var(--ufal-text) !important;
+  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
 
-    div[data-testid="stDownloadButton"] > button:hover {
-        background-color: #155a8a;
-        color: white !important;
-    }
-    
-    button[kind="primary"] span {
-        color: white !important;
-    }
-    
-    /* Cor do texto do selectbox quando selecionado */
-    div[data-baseweb="select"] button,
-    div[data-baseweb="select"] button span,
-    div[data-baseweb="select"] [role="combobox"],
-    div[data-baseweb="select"] [role="combobox"] span,
-    div[data-baseweb="select"] div[aria-expanded="true"],
-    div[data-baseweb="select"] div[aria-expanded="true"] span {
-        color: white !important;
-    }
-    
-    /* Texto das opções no dropdown do selectbox */
-    ul[role="listbox"] li,
-    ul[role="listbox"] li span,
-    div[data-baseweb="select"] ul[role="listbox"] li,
-    div[data-baseweb="select"] ul[role="listbox"] li span {
-        color: #333333 !important;
-    }
-    
-    /* Opção selecionada no dropdown */
-    ul[role="listbox"] li[aria-selected="true"],
-    ul[role="listbox"] li[aria-selected="true"] span {
-        color: white !important;
-    }
-    
-    /* Expander de backup no cabeçalho - sobrepor quando aberto */
-    div[data-testid*="column"]:has(.stExpander) {
-        position: relative;
-        z-index: 1000;
-    }
-    
-    /* Conteúdo do expander deve ficar sobreposto */
-    .stExpander {
-        position: relative !important;
-        z-index: 1000 !important;
-    }
-    
-    /* Garantir que o conteúdo expandido fique sobre outros elementos */
-    .stExpander > div[data-testid*="expanderContent"] {
-        position: absolute !important;
-        background-color: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 5px !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        z-index: 9999 !important;
-        right: 0 !important;
-        min-width: 320px !important;
-        max-width: 400px !important;
-        margin-top: 5px !important;
-        padding: 10px !important;
-    }
+.stMarkdown, .stText, .stCaption, p, div, span, label {
+  color: var(--ufal-text) !important;
+  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+}
+
+h1 {
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  margin: 0.25rem 0 !important;
+}
+
+h2 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  margin: 0.75rem 0 0.25rem 0 !important;
+}
+
+h3 {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  margin: 0.5rem 0 0.25rem 0 !important;
+}
+
+hr {
+  border-top: 1px solid var(--ufal-border) !important;
+  margin: 0.75rem 0 !important;
+}
+
+a, a:visited {
+  color: var(--ufal-blue) !important;
+  text-decoration: underline !important;
+}
+
+a:hover {
+  color: var(--ufal-blue-hover) !important;
+}
+
+.stTextInput input,
+.stNumberInput input,
+.stTextArea textarea,
+div[data-baseweb="select"] > div {
+  border: 1px solid var(--ufal-border) !important;
+  border-radius: 6px !important;
+  background: #FFFFFF !important;
+  color: var(--ufal-text) !important;
+}
+
+.stTextInput input:focus,
+.stNumberInput input:focus,
+.stTextArea textarea:focus,
+div[data-baseweb="select"] [role="combobox"]:focus,
+button:focus,
+button:focus-visible {
+  outline: 3px solid rgba(11, 95, 165, 0.35) !important;
+  outline-offset: 2px !important;
+}
+
+.stButton > button,
+div[data-testid="stDownloadButton"] > button {
+  background-color: var(--ufal-blue) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--ufal-blue) !important;
+  border-radius: 6px !important;
+  padding: 0.45rem 0.9rem !important;
+  font-weight: 700 !important;
+}
+
+.stButton > button:hover,
+div[data-testid="stDownloadButton"] > button:hover {
+  background-color: var(--ufal-blue-hover) !important;
+  border-color: var(--ufal-blue-hover) !important;
+}
+
+.stButton > button:active,
+div[data-testid="stDownloadButton"] > button:active {
+  background-color: var(--ufal-blue-active) !important;
+  border-color: var(--ufal-blue-active) !important;
+}
+
+.stButton > button:disabled,
+div[data-testid="stDownloadButton"] > button:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
+
+div[data-baseweb="select"] [role="combobox"],
+div[data-baseweb="select"] [role="combobox"] * {
+  color: var(--ufal-text) !important;
+}
+
+div[data-baseweb="select"] ul[role="listbox"] li,
+div[data-baseweb="select"] ul[role="listbox"] li * {
+  color: var(--ufal-text) !important;
+}
+
+div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] {
+  background-color: var(--ufal-blue) !important;
+}
+
+div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] * {
+  color: #FFFFFF !important;
+}
+
+div[data-baseweb="tag"] {
+  background-color: var(--ufal-blue) !important;
+  border: 1px solid var(--ufal-blue) !important;
+  color: #FFFFFF !important;
+}
+
+div[data-baseweb="tag"] * {
+  color: #FFFFFF !important;
+}
+
+.stDataFrame {
+  border: 1px solid var(--ufal-border) !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+}
+
+.stImage {
+  margin-bottom: 0 !important;
+}
+
+[data-testid="column"] {
+  padding-right: 10px !important;
+}
 </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 # Temas do Núcleo I (Art. 13 a-i da Res. CNE/CP nº 4/2024)
 TEMAS_NUCLEO_I = [
@@ -1381,6 +1310,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
