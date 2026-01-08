@@ -165,6 +165,18 @@ def _formatar_rotulo_periodo(semestre) -> str:
     return "Sem período"
 
 
+def _extrair_semestre_numerico(valor) -> int | None:
+    if isinstance(valor, (int, float)):
+        inteiro = int(valor)
+        return inteiro if inteiro > 0 else None
+    if isinstance(valor, str):
+        digitos = "".join(ch for ch in valor if ch.isdigit())
+        if digitos:
+            inteiro = int(digitos)
+            return inteiro if inteiro > 0 else None
+    return None
+
+
 def _obter_observacao_nucleo(componente: dict) -> str:
     nucleo = componente.get("nucleo")
     partes: list[str] = []
@@ -241,12 +253,11 @@ def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
     ordem_grupos: list = []
     for comp in componentes_ordenados:
         semestre_val = comp.get("semestre")
-        if isinstance(semestre_val, (int, float)) and semestre_val > 0:
-            chave = int(semestre_val)
-        elif isinstance(semestre_val, str) and semestre_val.strip().isdigit():
-            chave = int(semestre_val.strip())
+        semestre_num = _extrair_semestre_numerico(semestre_val)
+        if semestre_num is not None:
+            chave = semestre_num
         else:
-            chave = "Sem período"
+            chave = str(semestre_val).strip() if semestre_val else "Sem período"
         
         if chave not in grupos:
             grupos[chave] = []
@@ -278,14 +289,15 @@ def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
             else:
                 aulas_semanais_display = None
             
-        semestre_bruto = comp.get("semestre", "")
-        if isinstance(semestre_bruto, (int, float)):
-            semestre_formatado = str(int(semestre_bruto))
-        else:
-            semestre_formatado = str(semestre_bruto) if semestre_bruto not in (None, "") else ""
+            semestre_bruto = comp.get("semestre", "")
+            semestre_num = _extrair_semestre_numerico(semestre_bruto)
+            if semestre_num is not None:
+                semestre_formatado = str(semestre_num)
+            else:
+                semestre_formatado = str(semestre_bruto).strip() if semestre_bruto not in (None, "") else ""
         
-        dados_matriz.append({
-            "Semestre": semestre_formatado,
+            dados_matriz.append({
+                "Semestre": semestre_formatado,
                 "Nome": comp.get("nome", ""),
                 "Tipo": comp.get("tipo", ""),
                 "CH Semanal": aulas_semanais_display,
@@ -302,8 +314,9 @@ def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
         ch_pratica_sem = sum(c.get("ch_pratica", 0) for c in componentes_semestre)
         ch_extensao_sem = sum(c.get("ch_extensao", 0) for c in componentes_semestre)
         
+        semestre_total = str(_extrair_semestre_numerico(chave) or chave).strip()
         dados_matriz.append({
-            "Semestre": str(chave),
+            "Semestre": semestre_total,
             "Nome": "TOTAL DO PERÍODO",
             "Tipo": "",
             "CH Semanal": None,
@@ -383,10 +396,11 @@ def _agrupar_componentes_por_semestre(componentes: list) -> list[dict]:
     
     for comp in componentes:
         semestre_val = comp.get("semestre")
-        if isinstance(semestre_val, (int, float)) and semestre_val > 0:
-            chave = int(semestre_val)
+        semestre_num = _extrair_semestre_numerico(semestre_val)
+        if semestre_num is not None:
+            chave = semestre_num
         else:
-            chave = "Sem período"
+            chave = str(semestre_val).strip() if semestre_val else "Sem período"
         grupos.setdefault(chave, []).append(comp)
     
     resultado = []
