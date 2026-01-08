@@ -1347,10 +1347,10 @@ def main():
                     "Nome": st.column_config.TextColumn("Nome do Componente", width="large"),
                     "Tipo": st.column_config.TextColumn("Tipo", width="small"),
                     "CH Semanal": st.column_config.NumberColumn("CH Semanal", width="small", format="%d"),
-                    "CH Teórica": st.column_config.NumberColumn("CH Teórica", width="small", format="%.0fh"),
-                    "CH Prática": st.column_config.NumberColumn("CH Prática", width="small", format="%.0fh"),
-                    "CH Extensão": st.column_config.NumberColumn("CH Extensão", width="small", format="%.0fh"),
-                    "CH Total": st.column_config.NumberColumn("CH Total", width="small", format="%.0fh"),
+                    "CH Teórica": st.column_config.NumberColumn("CH Teórica", width="small", format="%d"),
+                    "CH Prática": st.column_config.NumberColumn("CH Prática", width="small", format="%d"),
+                    "CH Extensão": st.column_config.NumberColumn("CH Extensão", width="small", format="%d"),
+                    "CH Total": st.column_config.NumberColumn("CH Total", width="small", format="%d"),
                     "Núcleo": st.column_config.TextColumn("Núcleo", width="small"),
                     "Observação Núcleo": st.column_config.TextColumn("Observação Núcleo", width="large")
                 }

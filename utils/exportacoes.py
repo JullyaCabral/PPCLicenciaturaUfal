@@ -162,19 +162,45 @@ def _formatar_rotulo_periodo(semestre) -> str:
 
 def _obter_observacao_nucleo(componente: dict) -> str:
     nucleo = componente.get("nucleo")
+    partes: list[str] = []
+    
     if nucleo == "I":
         temas = componente.get("temas_nucleo_i") or []
-        if temas:
-            codigos = []
-            for tema in temas:
-                if isinstance(tema, str) and ")" in tema:
-                    codigos.append(tema.split(")")[0].strip().upper())
-                elif isinstance(tema, str) and tema:
-                    codigos.append(tema.strip())
-            if codigos:
-                prefixo = "Temas" if len(codigos) > 1 else "Tema"
-                return f"{prefixo}: {', '.join(codigos)}"
-    return ""
+        codigos = []
+        for tema in temas:
+            if isinstance(tema, str) and ")" in tema:
+                codigos.append(tema.split(")")[0].strip().upper())
+            elif isinstance(tema, str) and tema.strip():
+                codigos.append(tema.strip().upper())
+        if codigos:
+            partes.append(f"TEMA: {', '.join(codigos)}")
+    
+    elif nucleo == "II":
+        diretrizes = (componente.get("diretrizes_nucleo_ii") or "").strip()
+        if diretrizes:
+            partes.append(f"Diretrizes: {diretrizes}")
+    
+    elif nucleo == "III":
+        descricao = (componente.get("descricao_extensao") or "").strip()
+        if descricao:
+            partes.append(f"Extensão: {descricao}")
+    
+    elif nucleo == "IV":
+        local = (componente.get("local_realizacao") or "").strip()
+        etapa = (componente.get("etapa_estagio") or "").strip()
+        detalhes = []
+        if local:
+            detalhes.append(f"Local: {local}")
+        if etapa:
+            detalhes.append(f"Etapa: {etapa}")
+        if detalhes:
+            partes.append(" | ".join(detalhes))
+    
+    observacao_geral = (componente.get("observacoes") or "").strip()
+    if observacao_geral:
+        partes.append(f"Obs.: {observacao_geral}")
+    
+    return " | ".join(partes)
 
 
 def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
@@ -247,8 +273,14 @@ def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
             else:
                 aulas_semanais_display = None
             
-            dados_matriz.append({
-                "Semestre": comp.get("semestre", ""),
+        semestre_bruto = comp.get("semestre", "")
+        if isinstance(semestre_bruto, (int, float)):
+            semestre_formatado = str(int(semestre_bruto))
+        else:
+            semestre_formatado = str(semestre_bruto) if semestre_bruto not in (None, "") else ""
+        
+        dados_matriz.append({
+            "Semestre": semestre_formatado,
                 "Nome": comp.get("nome", ""),
                 "Tipo": comp.get("tipo", ""),
                 "CH Semanal": aulas_semanais_display,
@@ -266,7 +298,7 @@ def gerar_matriz_por_periodo(componentes: list) -> pd.DataFrame:
         ch_extensao_sem = sum(c.get("ch_extensao", 0) for c in componentes_semestre)
         
         dados_matriz.append({
-            "Semestre": chave if isinstance(chave, int) else str(chave),
+            "Semestre": str(chave),
             "Nome": "TOTAL DO PERÍODO",
             "Tipo": "",
             "CH Semanal": None,
@@ -387,6 +419,21 @@ def _formatar_aulas_semanais(valor: float | int | None) -> str:
     return ""
 
 
+def _formatar_celula_matriz_pdf(valor, coluna: str) -> str:
+    if valor is None:
+        return ""
+    if isinstance(valor, str):
+        return valor
+    try:
+        if isinstance(valor, (int, float)):
+            if float(valor).is_integer():
+                return str(int(valor))
+            return f"{valor:.2f}"
+    except (ValueError, TypeError):
+        return str(valor)
+    return str(valor)
+
+
 def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | None = None) -> str:
     """
     Exporta um relatório em PDF configurável, com possibilidade de escolher seções.
@@ -418,8 +465,8 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
     doc = SimpleDocTemplate(
         caminho_arquivo,
         pagesize=A4,
-        leftMargin=1.4 * cm,
-        rightMargin=1.2 * cm,
+        leftMargin=1.2 * cm,
+        rightMargin=1.0 * cm,
         topMargin=1.6 * cm,
         bottomMargin=1.4 * cm
     )
@@ -442,14 +489,6 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
         spaceAfter=10,
         leading=14
     )
-    subheading_style = ParagraphStyle(
-        'CustomSubHeading',
-        parent=styles['Heading3'],
-        fontSize=11,
-        textColor=colors.HexColor('#1F2A37'),
-        spaceAfter=6,
-        leading=13
-    )
     table_text_style = ParagraphStyle(
         'TableText',
         parent=styles['Normal'],
@@ -471,72 +510,82 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
     
     if "matriz" in secoes_normalizadas:
         story.append(Paragraph("Matriz Curricular por Período", heading_style))
-        for bloco in _agrupar_componentes_por_semestre(componentes):
-            story.append(Paragraph(f"Período {bloco['rotulo']}", subheading_style))
-            dados_tabela = [
-                [
-                    "",
-                    Paragraph("Nome do Componente", table_header_style),
-                    Paragraph("Tipo", table_header_style),
-                    Paragraph("CH Semanal", table_header_style),
-                    Paragraph("CH Teórica", table_header_style),
-                    Paragraph("CH Prática", table_header_style),
-                    Paragraph("CH Extensão", table_header_style),
-                    Paragraph("CH Total", table_header_style),
-                    Paragraph("Observação Núcleo", table_header_style)
-                ]
+        df_matriz_pdf = gerar_matriz_por_periodo(componentes)
+        if df_matriz_pdf.empty:
+            story.append(Paragraph("Nenhum componente cadastrado.", table_text_style))
+        else:
+            colunas_pdf = [
+                ("Semestre", "Semestre"),
+                ("Nome do Componente", "Nome"),
+                ("Tipo", "Tipo"),
+                ("CH Semanal", "CH Semanal"),
+                ("CH Teórica", "CH Teórica"),
+                ("CH Prática", "CH Prática"),
+                ("CH Extensão", "CH Extensão"),
+                ("CH Total", "CH Total"),
+                ("Núcleo", "Núcleo"),
+                ("Observação do Núcleo", "Observação Núcleo")
             ]
             
-            for comp in bloco["componentes"]:
-                dados_tabela.append([
-                    "",
-                    Paragraph(comp.get("nome", "") or "-", table_text_style),
-                    Paragraph(comp.get("tipo", "") or "-", table_text_style),
-                    _formatar_aulas_semanais(comp.get("aulas_semanais")),
-                    _formatar_carga_horaria(comp.get("ch_teorica")),
-                    _formatar_carga_horaria(comp.get("ch_pratica")),
-                    _formatar_carga_horaria(comp.get("ch_extensao")),
-                    _formatar_carga_horaria(comp.get("ch_total")),
-                    Paragraph(_obter_observacao_nucleo(comp), table_text_style)
-                ])
+            dados_tabela = [[Paragraph(titulo, table_header_style) for titulo, _ in colunas_pdf]]
+            estilos_especificos: list[tuple] = []
             
-            totais = bloco["totais"]
-            dados_tabela.append([
-                "",
-                Paragraph("<b>TOTAL DO PERÍODO</b>", table_text_style),
-                "",
-                "",
-                _formatar_carga_horaria(totais["ch_teorica"]),
-                _formatar_carga_horaria(totais["ch_pratica"]),
-                _formatar_carga_horaria(totais["ch_extensao"]),
-                _formatar_carga_horaria(totais["ch_total"]),
-                ""
-            ])
+            matriz_valores = df_matriz_pdf[[chave for _, chave in colunas_pdf]].where(pd.notnull, None)
             
-            tabela_matriz = Table(
-                dados_tabela,
-                repeatRows=1,
-                colWidths=[0.4 * cm, 6.4 * cm, 2.0 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.6 * cm, 1.8 * cm, 3.2 * cm]
-            )
-            tabela_matriz.setStyle(TableStyle([
-                ('BACKGROUND', (1, 0), (-1, 0), colors.HexColor('#0B5FA5')),
-                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#DDE7F5')),
-                ('TEXTCOLOR', (1, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('ALIGN', (1, 1), (1, -2), 'LEFT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('FONTNAME', (1, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
+            for idx_linha, valores in enumerate(matriz_valores.itertuples(index=False, name=None), start=1):
+                linha_celulas = []
+                for (titulo, chave), valor in zip(colunas_pdf, valores):
+                    texto = _formatar_celula_matriz_pdf(valor, chave)
+                    if chave in {"Nome", "Observação Núcleo"} and texto:
+                        linha_celulas.append(Paragraph(texto, table_text_style))
+                    else:
+                        linha_celulas.append(texto)
+                dados_tabela.append(linha_celulas)
+                
+                semestre_val = valores[0] if len(valores) > 0 else ""
+                nome_val = valores[1] if len(valores) > 1 else ""
+                
+                semestre_str = str(semestre_val) if semestre_val is not None else ""
+                nome_str = str(nome_val) if nome_val is not None else ""
+                
+                if semestre_str.lower().endswith("período") and not nome_str.strip():
+                    estilos_especificos.append(('BACKGROUND', (0, idx_linha), (-1, idx_linha), colors.HexColor('#E8EFF9')))
+                    estilos_especificos.append(('FONTNAME', (0, idx_linha), (-1, idx_linha), 'Helvetica-Bold'))
+                if nome_str.strip().upper() == "TOTAL DO PERÍODO":
+                    estilos_especificos.append(('FONTNAME', (0, idx_linha), (-1, idx_linha), 'Helvetica-Bold'))
+            
+            col_widths = [
+                1.6 * cm,
+                5.5 * cm,
+                1.6 * cm,
+                1.1 * cm,
+                1.1 * cm,
+                1.1 * cm,
+                1.1 * cm,
+                1.2 * cm,
+                1.1 * cm,
+                3.0 * cm
+            ]
+            
+            tabela_matriz = Table(dados_tabela, repeatRows=1, colWidths=col_widths)
+            estilo_base = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B5FA5')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 8),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('ROWBACKGROUNDS', (1, 1), (-1, -2), [colors.white, colors.HexColor('#F6F8FC')]),
-                ('BACKGROUND', (1, -1), (-1, -1), colors.HexColor('#E5EDF9')),
-                ('LINEBEFORE', (0, 0), (0, -1), 3, colors.HexColor('#0B5FA5')),
-                ('GRID', (1, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+                ('ALIGN', (0, 1), (0, -1), 'CENTER'),
+                ('ALIGN', (2, 1), (8, -1), 'CENTER'),
+                ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+                ('ALIGN', (-1, 1), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#B5C6E0')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F6F8FC')]),
                 ('TOPPADDING', (0, 0), (-1, -1), 3),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ]))
+            ]
             
+            tabela_matriz.setStyle(TableStyle(estilo_base + estilos_especificos))
             story.append(tabela_matriz)
             story.append(Spacer(1, 0.35 * cm))
     
