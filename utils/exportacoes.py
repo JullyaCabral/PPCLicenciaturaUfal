@@ -155,8 +155,13 @@ def _ordenar_semestre_valor(semestre) -> tuple:
 def _formatar_rotulo_periodo(semestre) -> str:
     if isinstance(semestre, (int, float)):
         return f"{int(semestre)}º Período"
-    if isinstance(semestre, str) and semestre.strip():
-        return semestre.strip()
+    if isinstance(semestre, str):
+        sem_strip = semestre.strip()
+        if not sem_strip:
+            return "Sem período"
+        if sem_strip.isdigit():
+            return f"{int(sem_strip)}º Período"
+        return sem_strip
     return "Sem período"
 
 
@@ -574,7 +579,7 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
                 1.4 * cm,  # CH Semanal
                 1.25 * cm,  # CH Teórica
                 1.25 * cm,  # CH Prática
-                1.4 * cm,  # CH Extensão
+                1.5 * cm,  # CH Extensão
                 1.25 * cm,  # CH Total
                 1.25 * cm,  # Núcleo
                 2.70 * cm   # Observação
