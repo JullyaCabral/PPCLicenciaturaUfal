@@ -392,7 +392,7 @@ def _agrupar_componentes_por_semestre(componentes: list) -> list[dict]:
         ch_pratica = sum(c.get("ch_pratica", 0) for c in componentes_semestre)
         ch_extensao = sum(c.get("ch_extensao", 0) for c in componentes_semestre)
         resultado.append({
-            "rotulo": str(chave),
+            "rotulo": _formatar_rotulo_periodo(chave),
             "componentes": componentes_semestre,
             "totais": {
                 "ch_total": ch_total,
@@ -492,15 +492,15 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
     table_text_style = ParagraphStyle(
         'TableText',
         parent=styles['Normal'],
-        fontSize=8,
-        leading=10,
+        fontSize=7,
+        leading=9,
         alignment=TA_LEFT
     )
     table_header_style = ParagraphStyle(
         'TableHeader',
         parent=styles['Normal'],
-        fontSize=8,
-        leading=10,
+        fontSize=7,
+        leading=9,
         alignment=TA_CENTER,
         textColor=colors.whitesmoke
     )
@@ -569,15 +569,15 @@ def exportar_pdf(componentes: list, caminho_arquivo: str, secoes: list[str] | No
                 estilos_especificos.append(('BACKGROUND', (0, linha_total_idx), (-1, linha_total_idx), colors.HexColor('#F2F5FA')))
             
             col_widths = [
-                6.0 * cm,  # Nome
-                2.1 * cm,  # Tipo
-                1.0 * cm,  # CH Semanal
-                1.0 * cm,  # CH Teórica
-                1.0 * cm,  # CH Prática
-                1.0 * cm,  # CH Extensão
-                1.1 * cm,  # CH Total
-                1.0 * cm,  # Núcleo
-                2.2 * cm   # Observação
+                5.8 * cm,  # Nome
+                1.9 * cm,  # Tipo
+                1.05 * cm,  # CH Semanal
+                1.05 * cm,  # CH Teórica
+                1.05 * cm,  # CH Prática
+                1.05 * cm,  # CH Extensão
+                1.05 * cm,  # CH Total
+                0.9 * cm,  # Núcleo
+                1.8 * cm   # Observação
             ]
             
             tabela_matriz = Table(dados_tabela, repeatRows=1, colWidths=col_widths)
