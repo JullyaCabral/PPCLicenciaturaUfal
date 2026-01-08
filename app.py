@@ -32,71 +32,75 @@ st.markdown(
     """
 <style>
 :root{
-  --ufal-blue: #0B5FA5;
-  --ufal-blue-hover: #084C84;
-  --ufal-blue-active: #063A66;
-  --ufal-bg: #FFFFFF;
-  --ufal-surface: #F7F9FB;
-  --ufal-border: #D7DEE6;
-  --ufal-text: #1F2A37;
-  --ufal-muted: #5B6B7A;
-  --ufal-danger: #C62828;
-  --ufal-danger-bg: #FDECEC;
+  --ufal-blue:#0B5FA5;
+  --ufal-blue-hover:#084C84;
+  --ufal-blue-active:#063A66;
+
+  --ufal-bg:#FFFFFF;
+  --ufal-surface:#F7F9FB;
+  --ufal-border:#D7DEE6;
+
+  --ufal-text:#1F2A37;
+  --ufal-muted:#5B6B7A;
+
+  --ufal-danger:#C62828;
+  --ufal-danger-bg:#FDECEC;
 }
 
-html, body, .stApp {
-  background: var(--ufal-bg) !important;
-  color: var(--ufal-text) !important;
-  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
-  font-size: 14px !important;
-  line-height: 1.4 !important;
+html, body, .stApp{
+  background:var(--ufal-bg) !important;
+  color:var(--ufal-text) !important;
+  font-family:Verdana, Geneva, Tahoma, sans-serif !important;
+  font-size:13px !important;
+  line-height:1.4 !important;
 }
 
-.stMarkdown, .stText, .stCaption, p, div, span, label {
-  color: var(--ufal-text) !important;
-  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+.stMarkdown, .stText, .stCaption, p, div, span, label{
+  color:var(--ufal-text) !important;
+  font-family:Verdana, Geneva, Tahoma, sans-serif !important;
 }
 
-h1 {
-  font-size: 1.35rem !important;
-  font-weight: 700 !important;
-  margin: 0.25rem 0 !important;
+h1{
+  font-size:1.30rem !important;
+  font-weight:700 !important;
+  margin:0.25rem 0 !important;
+  color:var(--ufal-text) !important;
+}
+h2{
+  font-size:1.12rem !important;
+  font-weight:700 !important;
+  margin:0.75rem 0 0.25rem 0 !important;
+  color:var(--ufal-text) !important;
+}
+h3{
+  font-size:1.02rem !important;
+  font-weight:700 !important;
+  margin:0.50rem 0 0.25rem 0 !important;
+  color:var(--ufal-text) !important;
 }
 
-h2 {
-  font-size: 1.15rem !important;
-  font-weight: 700 !important;
-  margin: 0.75rem 0 0.25rem 0 !important;
+hr{
+  border:none !important;
+  border-top:1px solid var(--ufal-border) !important;
+  margin:0.75rem 0 !important;
 }
 
-h3 {
-  font-size: 1.05rem !important;
-  font-weight: 700 !important;
-  margin: 0.5rem 0 0.25rem 0 !important;
+a, a:visited{
+  color:var(--ufal-blue) !important;
+  text-decoration:underline !important;
 }
-
-hr {
-  border-top: 1px solid var(--ufal-border) !important;
-  margin: 0.75rem 0 !important;
-}
-
-a, a:visited {
-  color: var(--ufal-blue) !important;
-  text-decoration: underline !important;
-}
-
-a:hover {
-  color: var(--ufal-blue-hover) !important;
+a:hover{
+  color:var(--ufal-blue-hover) !important;
 }
 
 .stTextInput input,
 .stNumberInput input,
 .stTextArea textarea,
-div[data-baseweb="select"] > div {
-  border: 1px solid var(--ufal-border) !important;
-  border-radius: 6px !important;
-  background: #FFFFFF !important;
-  color: var(--ufal-text) !important;
+div[data-baseweb="select"] > div{
+  border:1px solid var(--ufal-border) !important;
+  border-radius:6px !important;
+  background:#FFFFFF !important;
+  color:var(--ufal-text) !important;
 }
 
 .stTextInput input:focus,
@@ -104,79 +108,122 @@ div[data-baseweb="select"] > div {
 .stTextArea textarea:focus,
 div[data-baseweb="select"] [role="combobox"]:focus,
 button:focus,
-button:focus-visible {
-  outline: 3px solid rgba(11, 95, 165, 0.35) !important;
-  outline-offset: 2px !important;
+button:focus-visible{
+  outline:3px solid rgba(11,95,165,0.35) !important;
+  outline-offset:2px !important;
+  box-shadow:none !important;
 }
 
 .stButton > button,
-div[data-testid="stDownloadButton"] > button {
-  background-color: var(--ufal-blue) !important;
-  color: #FFFFFF !important;
-  border: 1px solid var(--ufal-blue) !important;
-  border-radius: 6px !important;
-  padding: 0.45rem 0.9rem !important;
-  font-weight: 700 !important;
+div[data-testid="stDownloadButton"] > button,
+button[kind="primary"]{
+  background-color:var(--ufal-blue) !important;
+  border:1px solid var(--ufal-blue) !important;
+  color:#FFFFFF !important;
+  border-radius:6px !important;
+  padding:0.45rem 0.9rem !important;
+  font-weight:700 !important;
+}
+
+.stButton > button *,
+div[data-testid="stDownloadButton"] > button *,
+button[kind="primary"] *{
+  color:#FFFFFF !important;
 }
 
 .stButton > button:hover,
-div[data-testid="stDownloadButton"] > button:hover {
-  background-color: var(--ufal-blue-hover) !important;
-  border-color: var(--ufal-blue-hover) !important;
+div[data-testid="stDownloadButton"] > button:hover,
+button[kind="primary"]:hover{
+  background-color:var(--ufal-blue-hover) !important;
+  border-color:var(--ufal-blue-hover) !important;
 }
 
 .stButton > button:active,
-div[data-testid="stDownloadButton"] > button:active {
-  background-color: var(--ufal-blue-active) !important;
-  border-color: var(--ufal-blue-active) !important;
+div[data-testid="stDownloadButton"] > button:active,
+button[kind="primary"]:active{
+  background-color:var(--ufal-blue-active) !important;
+  border-color:var(--ufal-blue-active) !important;
 }
 
 .stButton > button:disabled,
-div[data-testid="stDownloadButton"] > button:disabled {
-  opacity: 0.55 !important;
-  cursor: not-allowed !important;
+div[data-testid="stDownloadButton"] > button:disabled,
+button[kind="primary"]:disabled{
+  opacity:0.55 !important;
+  cursor:not-allowed !important;
 }
 
 div[data-baseweb="select"] [role="combobox"],
-div[data-baseweb="select"] [role="combobox"] * {
-  color: var(--ufal-text) !important;
+div[data-baseweb="select"] [role="combobox"] *{
+  color:var(--ufal-text) !important;
 }
 
 div[data-baseweb="select"] ul[role="listbox"] li,
-div[data-baseweb="select"] ul[role="listbox"] li * {
-  color: var(--ufal-text) !important;
+div[data-baseweb="select"] ul[role="listbox"] li *{
+  color:var(--ufal-text) !important;
 }
 
-div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] {
-  background-color: var(--ufal-blue) !important;
+div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"]{
+  background-color:var(--ufal-blue) !important;
 }
 
-div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] * {
-  color: #FFFFFF !important;
+div[data-baseweb="select"] ul[role="listbox"] li[aria-selected="true"] *{
+  color:#FFFFFF !important;
 }
 
-div[data-baseweb="tag"] {
-  background-color: var(--ufal-blue) !important;
-  border: 1px solid var(--ufal-blue) !important;
-  color: #FFFFFF !important;
+div[data-baseweb="tag"]{
+  background-color:var(--ufal-blue) !important;
+  border:1px solid var(--ufal-blue) !important;
+  color:#FFFFFF !important;
 }
 
-div[data-baseweb="tag"] * {
-  color: #FFFFFF !important;
+div[data-baseweb="tag"] *{
+  color:#FFFFFF !important;
 }
 
-.stDataFrame {
-  border: 1px solid var(--ufal-border) !important;
-  border-radius: 6px !important;
-  overflow: hidden !important;
+.stDataFrame{
+  border:1px solid var(--ufal-border) !important;
+  border-radius:6px !important;
+  overflow:hidden !important;
 }
 
-.stImage {
-  margin-bottom: 0 !important;
+.stImage{ margin-bottom:0 !important; }
+[data-testid="column"]{ padding-right:10px !important; }
+
+#ufal-backup-menu{
+  position:relative !important;
+  z-index:9999 !important;
 }
 
-[data-testid="column"] {
-  padding-right: 10px !important;
+#ufal-backup-menu div[data-testid="stExpander"]{
+  position:relative !important;
+  z-index:9999 !important;
+}
+
+#ufal-backup-menu div[data-testid="stExpander"] details{
+  position:relative !important;
+  z-index:9999 !important;
+}
+
+#ufal-backup-menu div[data-testid="stExpander"] details > summary{
+  position:relative !important;
+  z-index:10000 !important;
+}
+
+#ufal-backup-menu div[data-testid="stExpander"] details[open] > div{
+  position:absolute !important;
+  right:0 !important;
+  top:calc(100% + 6px) !important;
+
+  background:#FFFFFF !important;
+  border:1px solid var(--ufal-border) !important;
+  border-radius:6px !important;
+  box-shadow:0 8px 24px rgba(0,0,0,0.18) !important;
+
+  padding:12px !important;
+  min-width:320px !important;
+  max-width:420px !important;
+
+  z-index:10001 !important;
 }
 </style>
     """,
@@ -470,17 +517,19 @@ def main():
         st.markdown('<h1 style="margin-top: 30px; margin-bottom: 0; padding-left: 10px;">Sistema de Componentes Curriculares</h1>', unsafe_allow_html=True)
     
     with col_aviso:
-        st.markdown('<div style="margin-top: 35px; text-align: right;">', unsafe_allow_html=True)
+        st.markdown('<div id="ufal-backup-menu" style="margin-top:35px; text-align:right; position:relative;">',unsafe_allow_html=True)
+
         with st.expander("⚠️ Não perca seus dados, backup", expanded=False):
             st.markdown("""
             **⚠️ IMPORTANTE**
-            
-            O site **não salva seus dados automaticamente**. 
-            
+        
+            O site **não salva seus dados automaticamente**.
+        
             Realize o **backup manual** na aba "Exportar" para não perder seus dados!
-            
+        
             Caso feche o site sem backup, os dados **não serão restaurados**.
             """)
+        
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("---")
@@ -1310,6 +1359,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
