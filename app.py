@@ -65,10 +65,12 @@ html, body, .stApp{
 /* Restaurar fonte de ícones (resolve keyboard_arrow_... nos dropdowns/controles) */
 .material-icons,
 span.material-icons,
-i.material-icons,
+.material-symbols-outlined,
+.material-symbols-rounded,
+.material-symbols-sharp,
 [data-testid="stIconMaterial"],
 [data-testid="stIconMaterial"] *{
-  font-family: "Material Icons" !important;
+  font-family: "Material Icons", "Material Symbols Rounded", "Material Symbols Outlined" !important;
   font-feature-settings: "liga" 1 !important;
   -webkit-font-smoothing: antialiased !important;
 }
@@ -99,17 +101,6 @@ div[data-baseweb="select"] > div{
   background:#FFFFFF !important;
   color:var(--ufal-text) !important;
   font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif !important;
-}
-
-/* Foco acessível */
-.stTextInput input:focus,
-.stNumberInput input:focus,
-.stTextArea textarea:focus,
-div[data-baseweb="select"] [role="combobox"]:focus,
-button:focus,
-button:focus-visible{
-  outline:3px solid rgba(11,95,165,0.35) !important;
-  outline-offset:2px !important;
 }
 
 /* Botões – padrão único azul + texto branco */
@@ -1347,6 +1338,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
