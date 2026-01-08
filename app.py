@@ -212,8 +212,8 @@ div[data-baseweb="tag"] *{
   border-radius:6px !important;
   box-shadow:0 8px 24px rgba(0,0,0,0.18) !important;
   padding:12px !important;
-  min-width:320px !important;
-  max-width:420px !important;
+  min-width:500px !important;
+  max-width:500px !important;
   z-index:10001 !important;
 }
 
@@ -1355,6 +1355,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
